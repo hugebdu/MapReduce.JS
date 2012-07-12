@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html ng-app>
+<head>
+    <title></title>
+    <link href="bootstrap/css/bootstrap.css" type="text/css" rel="stylesheet">
+    <script type="text/javascript" src="js/angular-1.0.1.js"></script>
+    <script type="text/javascript" src="js/node.js"></script>
+    <style type="text/css">
+        .quater {
+            width: 420px;
+            height: 150px;
+        }
+
+        .log-panel {
+            width: 900px;
+            height: 250px;
+        }
+    </style>
+</head>
+<body>
+<div class="container" ng-controller="NodeCtrl">
+    <img src="images/logo.png" alt="logo">
+
+    <div class="row">
+        <div class="span6 well quater">
+            <h2>Status</h2>
+            <span class="label {{status.cssClass}}">{{status.label}}</span>
+            <dl ng-hide="status == StatusLabel.Disconnected">
+                <dt>Remote server:</dt>
+                <dd>{{general.server}}</dd>
+                <dt>Account:</dt>
+                <dd>{{general.account}}</dd>
+            </dl>
+            <button class="btn btn-primary" ng-click="connect()">Connect</button>
+            <button class="btn" ng-click="disconnect()">Disconnect</button>
+            <button class="btn" ng-click="run()">Run</button>
+        </div>
+        <div class="span6 well quater">
+            <h2>Job Details</h2>
+            <dl style="margin-top: 1px;" ng-show="status == StatusLabel.Running">
+                <dt>Name:</dt>
+                <dd>{{job.name}}</dd>
+                <dt>Phase:</dt>
+                <dd>{{job.phase}}</dd>
+                <dt>Progress:</dt>
+                <dd>
+                    <div class="progress progress-striped" style="margin-top: 5px;">
+                        <div class="bar"
+                             style="width: {{job.progress}}%;"></div>
+                    </div>
+                </dd>
+            </dl>
+        </div>
+        <div class="span12 well log-panel">
+            <h2>Log:</h2>
+            <pre style="height: 195px; margin-top: 5px; background-color: #ffffff; overflow-y: scroll;">{{log.data}}</pre>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

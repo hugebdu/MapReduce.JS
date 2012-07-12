@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>MapReduceJS - Computational Node - Status</title>
+    <script type="text/javascript" src="js/mootools-core-1.4.5-full-compat.js"></script>
+    <script type="text/javascript" src="js/LocalStorage.js"></script>
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.css">
+    <script>
+        var storage = new LocalStorage();
+//        storage.set("key", { name: "name", age: 25 });
+
+        window.addEvent('domready', function() {
+
+            $("downloadBtn").addEvent("click", function(event) {
+//                var actualUrl = $("url").get("value") || $("url").get("placeholder");
+                var actualUrl = "https://www.google.com";
+
+                var options = {
+                    url: actualUrl,
+                    method: "get",
+                    async: true,
+                    onSuccess: function(text, xml) {
+                        alert("huraaa");
+                    },
+                    onFailure: function(xhr) {
+                        alert("Failed!");
+                    },
+                    onProgress: function(event, xhr) {
+                        alert("progress!");
+                    },
+                    onException: function(headerName, value) {
+                        alert("exception!");
+                    }
+                };
+
+                var request = new Request(options);
+//                request.send();
+
+                var xhr = new XMLHttpRequest();
+                var result = xhr.open("get", "http://www.textfiles.com/hacking/homebank.txt", false);
+                xhr.responseType = "blob";
+                xhr.send("");
+
+                event.stop();
+            });
+        });
+    </script>
+</head>
+<body>
+<div class="container">
+    <div class="page-header">
+        <h1>MapReduce.JS</h1>
+    </div>
+    <form class="well">
+        <label>Data file URL:</label>
+        <input id="url" class="input-xxlarge" type="text" placeholder="http://shmuglindaniel.blob.core.windows.net/data/sample.txt"><br>
+        <button id="downloadBtn" class="btn">Try downloading data...</button>
+    </form>
+</div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html ng-app>
+<head>
+    <title>Job 'JobName' Details</title>
+    <link href="bootstrap/css/bootstrap.css" type="text/css" rel="stylesheet">
+    <script src="js/angular-1.0.1.js"></script>
+    <script src="js/edit-job.js"></script>
+</head>
+<body>
+<div class="container" style="margin-top: 20px;" ng-controller="JobCtrl">
+    <form class="well">
+        <h3>General</h3>
+        <label>ID</label>
+        <input type="text" ng-model="job.general.id">
+
+        <label>Name</label>
+        <input type="text" ng-model="job.general.name">
+
+        <h3>Data</h3>
+
+        <fieldset>
+            <div
+        </fieldset>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" ng-click="update(job)">Update</button>
+        </div>
+
+    </form>
+</div>
+</body>
+</html>
