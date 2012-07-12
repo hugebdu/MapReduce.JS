@@ -16,6 +16,14 @@
             width: 900px;
             height: 250px;
         }
+
+        .log-panel pre {
+            height: 195px;
+            margin-top: 5px;
+            background-color: #000000;
+            overflow-y: scroll;
+            color: #32cd32;
+        }
     </style>
 </head>
 <body>
@@ -54,7 +62,7 @@
         </div>
         <div class="span12 well log-panel">
             <h2>Log:</h2>
-            <pre style="height: 195px; margin-top: 5px; background-color: #ffffff; overflow-y: scroll;">{{log.data}}</pre>
+            <pre>{{log.data}}</pre>
         </div>
     </div>
 </div>
