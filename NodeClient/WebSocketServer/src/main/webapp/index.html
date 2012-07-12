@@ -6,6 +6,11 @@
     <link href="bootstrap/css/bootstrap.css" type="text/css" rel="stylesheet">
     <script type="text/javascript" src="js/angular-1.0.1.js"></script>
     <script type="text/javascript" src="js/node.js"></script>
+    <script type="text/javascript" src="js/socket.io.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.2.js"></script>
+    <script type="text/javascript">
+        var server = "http://192.168.1.140:8082/"
+    </script>
     <style type="text/css">
         .quater {
             width: 420px;
@@ -40,9 +45,12 @@
                 <dt>Account:</dt>
                 <dd>{{general.account}}</dd>
             </dl>
-            <button class="btn btn-primary" ng-click="connect()">Connect</button>
-            <button class="btn" ng-click="disconnect()">Disconnect</button>
-            <button class="btn" ng-click="run()">Run</button>
+            <div class="control-group">
+                <button class="btn btn-primary" ng-click="connect()">Connect</button>
+                <button class="btn" ng-click="disconnect()">Disconnect</button>
+                <button class="btn" ng-click="run()">Run</button>
+                <button class="btn" ng-click="download('sample_1MB.json')">Download 'sample_1MB.json'</button>
+            </div>
         </div>
         <div class="span6 well quater">
             <h2>Job Details</h2>
