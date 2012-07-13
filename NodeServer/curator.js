@@ -1,148 +1,164 @@
-var express = require('express')
-  , sio = require('socket.io')
+var sio = require('socket.io')
+  , util = require('util')
+  , events = require("events")
   , sql = require('node-sqlserver')
-  , util = require('util');
-
+  , jobsmonitor = require('./jobsmonitor');
+  
 var conn_str = "Driver={SQL Server Native Client 10.0};Server=tcp:yloh7tw5n9.database.windows.net,1433;Database=mrjs;Uid=cloud@yloh7tw5n9;Pwd=MapReduce1;Encrypt=yes;Connection Timeout=30;";
+var exports = module.exports = Curator;
 
-process.on('uncaughtException', function (err) {
-  console.log('Caught unhandled exception: ' + err);
-});
-
-var curatorId = generateGuid();
-var app = express.createServer();
-var io = sio.listen(app);
-app.listen(8082, function () {
-  var addr = app.address();
-});
-
-
-app.get('/', function (req, res) {
-  res.sendfile(__dirname + '/index.html');
-});
+/**
+* Creates a new Curator object.
+*
+* @param {object} [app]          The server object.
+*/
+function Curator(app) {
+	util.log("<Curator>: Create new Curator object");
+	if (!app) {
+		throw new Error("<Curator>: Application cannot be null");
+	}
+	_initialize(this, app);
+}
 
 
+function _initialize(curator, app){
+	curator.server = app;
+	curator.curatorId = generateGuid();
+}
 
-var activeNodes = {};
-
-io.sockets.on('connection', function (socket) {
-	// Node connected
-	console.log('Connected new socket id: ' + socket.id);
-
-	socket.nodeId = registerNode();
-	console.log('Emit register for nodeId:' + socket.nodeId);
-	socket.emit('register',{ nodeId: socket.nodeId});
+Curator.prototype.start = function (){
+	util.log("<Curator>: Curator.start");
+	this.io = sio.listen(this.server);
+	this.activeNodes = {};
+	this.jobMonitor = new jobsmonitor();
 	
-	// Got node info
-	socket.on('userInfo', function (info) {
-		console.log('Client ' + socket.nodeId + ' sent info: ' + info);
-		updateNodeInfo(socket.nodeId,info);
-	});
-
-	// Got node info
-	socket.on('jobProgress', function (jobInfo) {
-		console.log('Client ' + socket.nodeId + ' sent job progress update: ' + jobInfo);
-		updateNodeJobProgress(socket.nodeId,jobInfo);
-	});
-
-	// Node disconnected
-	socket.on('disconnect', function () {
-		console.log('Socket disconnected: ' + socket.nodeId)
-		unregisterNode(socket.nodeId);
-	});
+	this.jobMonitor.on('jobReceived',function(msg){
+			util.log('<Curator>: Curator.receive job ' + msg);
+		}
+	);
 	
-	setTimeout(function() { 
-				socket.emit(
-					'job',
-					{ 
-						"details" : {
-							"name" : "Daniloop",
-							"jobId" : generateGuid(),
-							"splitId" : generateGuid(),
-							"phase" : "Map"
-						},
-						"data" : "http://wix.com",
-						"handler" : "function (d) {alert('Hello from mapper');}"
-					}
-					); 
-				}, 
-				5000);
-});
+	this.io.sockets.on('connection', function (socket) {
+		// Node connected
+		util.log('<Curator>: Connected new socket id: ' + socket.id);
 
+		socket.nodeId = registerNode(this);
+		util.log('<Curator>: Emit register for nodeId:' + socket.nodeId);
+		socket.emit('register',{ nodeId: socket.nodeId});
+		
+		// Got node info
+		socket.on('userInfo', function (info) {
+			util.log('<Curator>: Client ' + socket.nodeId + ' sent info: ' + info);
+			updateNodeInfo(this,socket.nodeId,info);
+		});
 
-function registerNode(){
+		// Got node info
+		socket.on('jobProgress', function (jobInfo) {
+			util.log('<Curator>: Client ' + socket.nodeId + ' sent job progress update: ' + jobInfo);
+			updateNodeJobProgress(this,socket.nodeId,jobInfo);
+		});
+
+		// Node disconnected
+		socket.on('disconnect', function () {
+			util.log('<Curator>: Socket disconnected: ' + socket.nodeId)
+			unregisterNode(this,socket.nodeId);
+		});
+		
+		setTimeout(function() { 
+					socket.emit(
+						'job',
+						{ 
+							"details" : {
+								"name" : "Daniloop",
+								"jobId" : generateGuid(),
+								"splitId" : generateGuid(),
+								"phase" : "Map"
+							},
+							"data" : "http://wix.com",
+							"handler" : "function (d) {alert('Hello from mapper');}"
+						}
+						); 
+					}, 
+					5000);
+	});
+}
+
+Curator.prototype.processJob = function(job){
+	util.log("<Curator>: Curator.processJob");
+}
+
+function registerNode(curator){
 	var nodeId = generateGuid();
-	console.log('  Assign socket ID = ' + nodeId);
-	activeNodes[nodeId] = {};
+	util.log('<Curator>:   Assign socket ID = ' + nodeId);
+	curator.activeNodes[nodeId] = {};
 	updateNodeStatus(nodeId,'new');
 	return nodeId;
 }
 
-function unregisterNode(nodeId){
+function unregisterNode(curator, nodeId){
 	if(!nodeId)return;
-	delete activeNodes[nodeId];
+	delete curator.activeNodes[nodeId];
 	updateNodeStatus(nodeId,'closed');
 }
 
-function updateNodeStatus(nodeId, status) {
+function updateNodeStatus(curator, nodeId, status) {
 	try{
-		console.log('Update status to: ' + status + ' for node ' + nodeId); 
+		util.log('<Curator>: Update status to: ' + status + ' for node ' + nodeId); 
 		var command;
 		if(status=='new'){
-			command = util.format("INSERT INTO Node (NodeId, Status, CuratorId) VALUES ('%s','%s','%s')",nodeId, status, curatorId);
+			command = util.format("INSERT INTO Node (NodeId, Status, CuratorId) VALUES ('%s','%s','%s')",nodeId, status, curator.curatorId);
 		}
 		else if(status=='closed'){
-			command = util.format("DELETE FROM Node WHERE NodeId = '%s' AND CuratorId = '%s'",nodeId,curatorId);
+			command = util.format("DELETE FROM Node WHERE NodeId = '%s' AND CuratorId = '%s'",nodeId,curator.curatorId);
 		}
 		else{
-			command = util.format("UPDATE Node SET Status = '%s' WHERE NodeId = '%s' AND CuratorId = '%s'",status,nodeId,curatorId);
+			command = util.format("UPDATE Node SET Status = '%s' WHERE NodeId = '%s' AND CuratorId = '%s'",status,nodeId,curator.curatorId);
 		}
 		
 		updateDb(command);
 	}
 	catch(e){
-		console.log('Status update failed: ' + e.message); 
+		util.log('<Curator>: Status update failed: ' + e.message); 
 	}
 }
 
-function updateNodeInfo(nodeId, nodeInfo) {
+function updateNodeInfo(curator, nodeId, nodeInfo) {
 	try{
-		console.log('Update node info: ' + nodeInfo + ' for node ' + nodeId); 
-		activeNodes[nodeId] = nodeInfo;
-		var command = util.format("UPDATE Node SET NodeInfo = '%s', Status = 'idle' WHERE NodeId = '%s' AND CuratorId = '%s'",nodeInfo,nodeId,curatorId);
+		util.log('<Curator>: Update node info: ' + nodeInfo + ' for node ' + nodeId); 
+		curator.activeNodes[nodeId] = nodeInfo;
+		var command = util.format("UPDATE Node SET NodeInfo = '%s', Status = 'idle' WHERE NodeId = '%s' AND CuratorId = '%s'",nodeInfo,nodeId,curator.curatorId);
 		updateDb(command);
 	}
 	catch(e){
-		console.log('Node info update failed: ' + e.message); 
+		util.log('<Curator>: Node info update failed: ' + e.message); 
 	}
 }
 
-function updateNodeJobProgress(nodeId, jobInfo) {
+function updateNodeJobProgress(curator,nodeId, jobInfo) {
 	try{
-		console.log('Update job info: ' + jobInfo + ' for node ' + nodeId); 
+		util.log('<Curator>: Update job info: ' + jobInfo + ' for node ' + nodeId); 
 		//TODO: Update DB
 		//var command = util.format("UPDATE Node SET NodeInfo = '%s', Status = 'idle' WHERE NodeId = '%s' AND CuratorId = '%s'",nodeInfo,nodeId,curatorId);
 		//updateDb(command);
 	}
 	catch(e){
-		console.log('Node info update failed: ' + e.message); 
+		util.log('<Curator>: Node info update failed: ' + e.message); 
 	}
 }
 
 function updateDb(command) {
 	try{
-		console.log('  Perform DB update command: ' + command)
+		util.log('<Curator>:   Perform DB update command: ' + command)
 		
 		sql.query(conn_str, command, function (err, results) {
 			if (err) {
-				console.log("Got error :-( " + err);
+				util.log("Got error :-( " + err);
 				return;
 			}
-			console.log("OK:" + results.length);
+			util.log("<Curator>: DB updated OK:" + results.length);
 		});
 	}
 	catch(e){
-		console.log('DB update failed: ' + e.message); 
+		util.log('<Curator>: DB update failed: ' + e.message); 
 	}
 }
 
