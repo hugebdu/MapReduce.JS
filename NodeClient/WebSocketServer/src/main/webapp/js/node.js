@@ -4,6 +4,10 @@
  * Date: 7/12/12
  */
 
+function onDataLoaded(data) {
+    alert("Hurra: " + data.length + ' records');
+}
+
 function NodeCtrl($scope, $filter, $http)
 {
     $scope.worker = {};
@@ -23,6 +27,10 @@ function NodeCtrl($scope, $filter, $http)
     $scope.socket = {};
 
     $scope.nodeId = {};
+
+    $scope.files = ['sample_1MB.php', 'sample_3MB.php', 'sample_5MB.php', 'sample_10MB.php'];
+
+    $scope.file = $scope.files[0];
 
     $scope.job = {
         "name" : "Job name here...",
@@ -98,8 +106,9 @@ function NodeCtrl($scope, $filter, $http)
         $scope.log.println("Disconnected from " + $scope.general.server);
     };
 
-    $scope.download = function(fileName) {
-        $http.jsonp('http://shmuglindaniel.blob.core.windows.net/mapreducejs/' + fileName).
+    $scope.download = function() {
+
+        $http.jsonp('/' + $scope.file + '?callback=onDataLoaded').
                 success(function(data, status, headers, config) {
                     // this callback will be called asynchronously
                     // when the response is available

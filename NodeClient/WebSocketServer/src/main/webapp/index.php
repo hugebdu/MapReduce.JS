@@ -1,5 +1,7 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+<?php
+header("Access-Control-Allow-Origin: *");
+?>
+<!DOCTYPE html>
 <html ng-app>
 <head>
     <title></title>
@@ -49,7 +51,6 @@
                 <button class="btn btn-primary" ng-click="connect()">Connect</button>
                 <button class="btn" ng-click="disconnect()">Disconnect</button>
                 <button class="btn" ng-click="run()">Run</button>
-                <button class="btn" ng-click="download('sample_1MB.json')">Download 'sample_1MB.json'</button>
             </div>
         </div>
         <div class="span6 well quater">
@@ -72,6 +73,14 @@
             <h2>Log:</h2>
             <pre>{{log.data}}</pre>
         </div>
+
+        <fieldset>
+            <input type="radio" ng-model="file" value="{{files[0]}}">{{files[0]}}<br>
+            <input type="radio" ng-model="file" value="{{files[1]}}">{{files[1]}}<br>
+            <input type="radio" ng-model="file" value="{{files[2]}}">{{files[2]}}<br>
+            <input type="radio" ng-model="file" value="{{files[3]}}">{{files[3]}}<br>
+        </fieldset>
+        <button class="btn" ng-click="download()">Download '{{file}}'</button>
     </div>
 </div>
 

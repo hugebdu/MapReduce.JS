@@ -1,32 +1,171 @@
 <!DOCTYPE html>
-<html ng-app>
+<html ng-app="mapreduce-management">
 <head>
-    <title>Job 'JobName' Details</title>
+    <title>MapReduceJS - My Account</title>
     <link href="bootstrap/css/bootstrap.css" type="text/css" rel="stylesheet">
-    <script src="js/angular-1.0.1.js"></script>
-    <script src="js/edit-job.js"></script>
+    <link href="codemirror/codemirror.css" type="text/css" rel="stylesheet">
+
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.2.js"></script>
+    <script src="js/angular-1.0.1.js" type="text/javascript"></script>
+    <script src="js/underscore.js" type="text/javascript"></script>
+    <script src="bootstrap/js/bootstrap.js" type="text/javascript"></script>
+    <script src="js/mapreduce-management.js" type="text/javascript"></script>
+    <script src="codemirror/codemirror.js" type="text/javascript"></script>
+    <script src="codemirror/mode/javascript/javascript.js" type="text/javascript"></script>
+
+    <script type="text/ng-template" id="data.html">
+        <div class="page-header">
+            <h1>Data Sets</h1>
+        </div>
+        <table class="table table-condensed">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Folder URL</th>
+                <th>Created On</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="dataSet in dataSets">
+                <td><a href="#/data/{{dataSet.id}}">{{dataSet.id}}</a></td>
+                <td>{{dataSet.name}}</td>
+                <td>{{dataSet.url}}</td>
+                <td>{{dataSet.dateCreated | date: 'MM/dd/yyyy h:mma'}}</td>
+                <td><i class="{{statuses[dataSet.status].icon}}" style="margin-right: 5px;"></i>{{statuses[dataSet.status].label}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </script>
+
+    <script type="text/ng-template" id="account.html">
+        <div class="page-header">
+            <h1>Account details</h1>
+        </div>
+        <div class="span6 well">
+            <p>
+                <label>Full name</label>
+                <input value="Daniel Shmuglin"><br>
+            </p>
+
+            <p>
+                <label>Email</label>
+                <input value="hugebdu@gmail.com">
+            </p>
+        </div>
+        <div class="span4 well">
+            <p>
+                <label>Account Type</label>
+                <span class="label">premium</span>
+            </p>
+        </div>
+    </script>
+
+    <script type="text/ng-template" id="all-jobs.html">
+        <div class="page-header">
+            <h1>All Jobs</h1>
+        </div>
+        <table class="table table-condensed">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="job in jobs">
+                <td><a href="#/jobs/{{job.id}}">{{job.id}}</a></td>
+                <td>{{job.name}}</td>
+                <td><button class="btn btn-mini">Run...</button></td>
+            </tr>
+            </tbody>
+        </table>
+    </script>
+
+    <script type="text/ng-template" id="job.html">
+        <div class="page-header">
+            <h1 ng-hide="job">Create Job</h1>
+            <h1 ng-show="job">Editing Job #{{job.id}}</h1>
+        </div>
+        <form>
+            <p>
+                <label>ID</label>
+                <input type="text" ng-model="job.id">
+            </p>
+            <p>
+                <label>Name</label>
+                <input type="text" ng-model="job.name">
+            </p>
+            <p>
+                <label>Description</label>
+                <textarea ng-model="job.description"></textarea>
+            </p>
+            <p>
+                <label>Data Set</label>
+                <select ng-model="job.dataSetId" ng-options="dataSet.id as dataSet.name for dataSet in dataSets" required="">
+                </select>
+            </p>
+            <p>
+                <label>Map/Reduce JavaScript</label>
+                <textarea id="javaScript" ng-model="job.javaScript"></textarea>
+            </p>
+            <div class="control-group">
+                <button class="btn btn-primary" ng-click="save()">Save</button>
+                <a href="#/jobs" class="btn">Cancel</a>
+            </div>
+        </form>
+    </script>
+
 </head>
 <body>
-<div class="container" style="margin-top: 20px;" ng-controller="JobCtrl">
-    <form class="well">
-        <h3>General</h3>
-        <label>ID</label>
-        <input type="text" ng-model="job.general.id">
+<div class="navbar">
+    <div class="navbar-inner">
+        <div class="container">
+            <a href="#" class="brand">MapReduceJS - Home</a>
 
-        <label>Name</label>
-        <input type="text" ng-model="job.general.name">
-
-        <h3>Data</h3>
-
-        <fieldset>
-            <div
-        </fieldset>
-
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary" ng-click="update(job)">Update</button>
+            <div class="nav-collapse">
+                <ul class="nav">
+                    <li class="active"><a href="#">Home</a></li>
+                    <li class="dropdown">
+                        <a data-toggle="dropdown" class="dropdown-toggle" href="#">Jobs<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#/jobs/">Create...</a></li>
+                            <li class="divider"></li>
+                            <li><a href="#/jobs">Manage jobs</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a data-toggle="dropdown" class="dropdown-toggle" href="#">Data<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#">Upload data...</a></li>
+                            <li class="divider"></li>
+                            <li><a href="#/data">Manage data</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a data-toggle="dropdown" class="dropdown-toggle" href="#">My Account<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#account">Account details...</a></li>
+                            <li><a href="#">Payment information... </a></li>
+                            <li class="divider"></li>
+                            <li><a href="#">Change password...</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <ul class="nav pull-right">
+                    <li class="divider-vertical"></li>
+                    <li><a href="#">Log out</a></li>
+                </ul>
+            </div>
         </div>
-
-    </form>
+    </div>
 </div>
+
+<div class="container" ng-view>
+
+</div>
+
 </body>
 </html>
