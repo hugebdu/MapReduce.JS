@@ -116,11 +116,18 @@ namespace JobProcessor.Implementation
                 message.PopReceipt));
 
             // TODO: Parse JSON and handle errors
-            var parts = message.AsString.Split(',');
-            jobInfo.JobId = parts[0];
-            jobInfo.DataSource = parts[1];
-            jobInfo.Mapper = new Uri(parts[2]);
-            jobInfo.Reducer = new Uri(parts[3]);
+            var jsonMessage = Newtonsoft.Json.Linq.JObject.Parse(message.AsString);
+            jobInfo.JobId = jsonMessage.Property("JobId").Value.ToString();
+            jobInfo.JobName = jsonMessage.Property("Name").Value.ToString();
+            jobInfo.DataSource = jsonMessage.Property("DataSource").Value.ToString();
+            jobInfo.Mapper = jsonMessage.Property("Mapper").Value.ToString();
+            jobInfo.Reducer = jsonMessage.Property("Reducer").Value.ToString();
+
+            //var parts = message.AsString.Split(',');
+            //jobInfo.JobId = parts[0];
+            //jobInfo.DataSource = parts[1];
+            //jobInfo.Mapper = parts[2];
+            //jobInfo.Reducer = parts[3];
             jobInfo.JobMessageId = message.Id;
             jobInfo.PopReceipt = message.PopReceipt;
 

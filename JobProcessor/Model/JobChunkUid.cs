@@ -11,5 +11,6 @@ namespace JobProcessor.Model
     {
         public string JobId { get; set; }
         public string ChunkId { get; set; }
+        public string JobName { get; set; }
     }
 }

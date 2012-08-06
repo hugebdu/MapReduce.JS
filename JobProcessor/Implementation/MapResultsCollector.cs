@@ -74,6 +74,7 @@ namespace JobProcessor.Implementation
                     ResponseQueueName = JobProcessor.RoleSettings.ChunkResponseQueue
                 };
                 chunk.ChunkUid.JobId = JobId;
+                chunk.ChunkUid.JobName = _jobInfo.JobName;
                 chunk.ChunkUid.ChunkId = Guid.NewGuid().ToString();
 
                 yield return chunk;

@@ -34,6 +34,7 @@ namespace JobProcessor.Implementation
 
                 chunk.ChunkUid.ChunkId = Guid.NewGuid().ToString();
                 chunk.ChunkUid.JobId = info.JobId;
+                chunk.ChunkUid.JobName = info.JobName;
 
                 Logger.Log.Instance.Info(string.Format("DefaultJobChunksProvider. Create new map chunk for JobId '{0}'. ChunkId: '{1}'",
                     chunk.ChunkUid.JobId,

@@ -49,7 +49,7 @@ namespace JobProcessor.Manage
                         jobInfo.PopReceipt,
                         jobInfo.DataSource));
 
-                    _jobSupplier.RemoveJob(jobInfo);
+                    //_jobSupplier.RemoveJob(jobInfo);
                 }
                 else
                 {
