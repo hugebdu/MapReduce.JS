@@ -1,5 +1,7 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+<?php
+header("Access-Control-Allow-Origin: *");
+?>
+<!DOCTYPE html>
 <html ng-app>
 <head>
     <title></title>
@@ -49,16 +51,15 @@
                 <button class="btn btn-primary" ng-click="connect()">Connect</button>
                 <button class="btn" ng-click="disconnect()">Disconnect</button>
                 <button class="btn" ng-click="run()">Run</button>
-                <button class="btn" ng-click="download('sample_1MB.json')">Download 'sample_1MB.json'</button>
             </div>
         </div>
         <div class="span6 well quater">
             <h2>Job Details</h2>
             <dl style="margin-top: 1px;" ng-show="status == StatusLabel.Running">
                 <dt>Name:</dt>
-                <dd>{{job.name}}</dd>
+                <dd>{{job.details.name}}</dd>
                 <dt>Phase:</dt>
-                <dd>{{job.phase}}</dd>
+                <dd>{{job.details.phase}}</dd>
                 <dt>Progress:</dt>
                 <dd>
                     <div class="progress progress-striped" style="margin-top: 5px;">

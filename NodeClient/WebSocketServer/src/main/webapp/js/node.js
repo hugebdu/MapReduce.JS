@@ -4,6 +4,10 @@
  * Date: 7/12/12
  */
 
+function onDataLoaded(data) {
+    alert("Hurra: " + data.length + ' records');
+}
+
 function NodeCtrl($scope, $filter, $http)
 {
     $scope.worker = {};
@@ -24,33 +28,40 @@ function NodeCtrl($scope, $filter, $http)
 
     $scope.nodeId = {};
 
-    $scope.job = {
-        "name" : "Job name here...",
-        "phase" : "Executing Map",
-        "progress" : 0
-    };
+    $scope.job = {}; /*{
+        "details" : {
+            "name" : "Some Job",
+            "jobId" : "1234",
+            "splitId" : "chunk123",
+            "phase" : "Map"
+        },
+        "data" : [],
+        "handler" : "function() { alert('hello') }"
+    };*/
 
     $scope.run = function() {
         //TODO:
         $scope.status = $scope.StatusLabel.Running;
         $scope.job.progress = 0;
-        $scope.log.println("Started job '" + $scope.job.name + "'");
-        $scope.worker = new Worker("js/worker.js");
-        $scope.worker.onmessage = function(msg) {
-            $scope.$apply(function() {
-                switch (msg.data.type) {
-                    case 'progress' :
-                        $scope.job.progress = msg.data.progress;
-                        break;
-                    case 'done' :
-                        $scope.log.println("Completed running job '" + $scope.job.name + "'");
-                        $scope.status = $scope.StatusLabel.Idle;
-                        $scope.worker.terminate();
-                        $scope.worker = {};
-                        break;
-                }
-            });
-        };
+        $scope.log.println("Started job '" + $scope.job.details.name + "'");
+        var f = eval("(" + $scope.job.handler + ")");
+        f();
+//        $scope.worker = new Worker("js/worker.js");
+//        $scope.worker.onmessage = function(msg) {
+//            $scope.$apply(function() {
+//                switch (msg.data.type) {
+//                    case 'progress' :
+//                        $scope.job.progress = msg.data.progress;
+//                        break;
+//                    case 'done' :
+//                        $scope.log.println("Completed running job '" + $scope.job.name + "'");
+//                        $scope.status = $scope.StatusLabel.Idle;
+//                        $scope.worker.terminate();
+//                        $scope.worker = {};
+//                        break;
+//                }
+//            });
+//        };
     };
 
     $scope.connect = function() {
@@ -71,8 +82,7 @@ function NodeCtrl($scope, $filter, $http)
 
         $scope.socket.on('job', function(job) {
             $scope.$apply(function() {
-                $scope.job.name = job.details.name;
-                $scope.job.phase = job.details.phase;
+                $scope.job = job;
                 //TODO: data & handler
                 $scope.run();
             });
@@ -98,20 +108,6 @@ function NodeCtrl($scope, $filter, $http)
         $scope.log.println("Disconnected from " + $scope.general.server);
     };
 
-    $scope.download = function(fileName) {
-        $http.jsonp('http://shmuglindaniel.blob.core.windows.net/mapreducejs/' + fileName).
-                success(function(data, status, headers, config) {
-                    // this callback will be called asynchronously
-                    // when the response is available
-                    window.alert("success " + status);
-                }).
-                error(function(data, status, headers, config) {
-                    // called asynchronously if an error occurs
-                    // or server returns response with status
-                    // code outside of the <200, 400) range
-                    window.alert("error " + status);
-                });
-    };
 
     $scope.log = {
         data : "",

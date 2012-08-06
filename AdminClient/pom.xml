@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>idc.ac.il</groupId>
+    <artifactId>mapreducejs-admin-client</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0</version>
+
+    <distributionManagement>
+        <repository>
+            <id>aws-ec2</id>
+            <url>scpexe://ec2-50-16-78-23.compute-1.amazonaws.com/</url>
+        </repository>
+    </distributionManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>deploy</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <tasks>
+                        <scp todir="ubuntu@ec2-50-16-78-23.compute-1.amazonaws.com:/var/www/manage"
+                             trust="true"
+                             failonerror="true"
+                             keyfile="C:\Users\daniels\.ssh\aws.ppk"
+                             verbose="true"
+                             passphrase="bmdsug">
+                            <fileset dir="${basedir}/src/main"/>
+                        </scp>
+                    </tasks>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>ant</groupId>
+                        <artifactId>ant-jsch</artifactId>
+                        <version>1.6.5</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>com.jcraft</groupId>
+                        <artifactId>jsch</artifactId>
+                        <version>0.1.42</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+<!--
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptor>src/assembly/bin.xml</descriptor>
+                    <finalName>node-client-${pom.version}</finalName>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+-->
+        </plugins>
+
+    </build>
+
+</project>
