@@ -57,9 +57,9 @@ header("Access-Control-Allow-Origin: *");
             <h2>Job Details</h2>
             <dl style="margin-top: 1px;" ng-show="status == StatusLabel.Running">
                 <dt>Name:</dt>
-                <dd>{{job.name}}</dd>
+                <dd>{{job.details.name}}</dd>
                 <dt>Phase:</dt>
-                <dd>{{job.phase}}</dd>
+                <dd>{{job.details.phase}}</dd>
                 <dt>Progress:</dt>
                 <dd>
                     <div class="progress progress-striped" style="margin-top: 5px;">
@@ -73,14 +73,6 @@ header("Access-Control-Allow-Origin: *");
             <h2>Log:</h2>
             <pre>{{log.data}}</pre>
         </div>
-
-        <fieldset>
-            <input type="radio" ng-model="file" value="{{files[0]}}">{{files[0]}}<br>
-            <input type="radio" ng-model="file" value="{{files[1]}}">{{files[1]}}<br>
-            <input type="radio" ng-model="file" value="{{files[2]}}">{{files[2]}}<br>
-            <input type="radio" ng-model="file" value="{{files[3]}}">{{files[3]}}<br>
-        </fieldset>
-        <button class="btn" ng-click="download()">Download '{{file}}'</button>
     </div>
 </div>
 
