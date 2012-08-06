@@ -19,6 +19,7 @@ namespace JobProcessor.Model
         public Uri Data { get; set; }
         public Uri Handler { get; set; }
         public ProcessingMode Mode { get; set; }
+        public string ResponseQueueName { get; set; }
 
         public JobChunk()
         {

@@ -10,23 +10,29 @@ namespace JobProcessotTest
     {
         static void Main(string[] args)
         {
+            //mrgen.test();
+            //return;
+            
+            if (args.Length > 0)
+            {
+                var mrgen = new MapResultGenerator();
+                if (args[0] == "mr")
+                {
+                    mrgen.Generate(args[1], args[2], args[3]);
+                }
+                else if (args[0] == "pop")
+                {
+                    mrgen.Pop();
+                }
+                return;
+            }
+
+            var workerRole = new WorkerRole();
+            workerRole.OnStart();
+            workerRole.Run();
+
             try
             {
-                JobProcessor.Model.JobChunk chunk = new JobProcessor.Model.JobChunk()
-                {
-                    Data = new Uri("http://www.idc.ac.il"),
-                    Handler = new Uri("http://www.idc.ac.il/handler"),
-                    Mode = JobProcessor.Model.ProcessingMode.Map
-                };
-
-                chunk.ChunkUid.SplitId = Guid.NewGuid().ToString();
-                chunk.ChunkUid.JobId = "J1";
-
-                Console.WriteLine(chunk.ToJson());
-                return;
-                var workerRole = new WorkerRole();
-                workerRole.OnStart();
-                workerRole.Run();
             }
             catch (Exception ex)
             {

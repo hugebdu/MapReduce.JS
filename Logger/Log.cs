@@ -14,18 +14,22 @@ namespace Logger
             Info = 2,
             Debug = 3
         }
+        
+        private object _syncObject = new Object();
+        private LogLevel _level;
 
         public static Log Instance {get; private set;}
-        private LogLevel _level;
 
         static Log()
         {
+            // TODO: Remove
+            System.IO.File.Delete(@"c:\temp\mr.log");
             Instance = new Log();
         }
 
         private Log()
 	    {
-            _level = LogLevel.Info;
+            _level = LogLevel.Debug;
         }
 
         public void Info(string message)
@@ -43,6 +47,28 @@ namespace Logger
             WriteLog(message, LogLevel.Error);
         }
 
+        public void Exception(Exception e, string message = null)
+        {
+            StringBuilder detailsBuilder = new StringBuilder();
+            detailsBuilder.AppendLine(string.Format("Exception occured. {0}", message));
+            Exception ex = e;
+            int i = 0;
+            while (ex != null)
+            {
+                detailsBuilder.AppendLine(string.Format("({0}) Exception of type {1}. Message: {2}",
+                    i++,
+                    ex.GetType(),
+                    ex.Message));
+                detailsBuilder.AppendLine("  === Stack trace ===");
+                detailsBuilder.AppendLine(ex.StackTrace);
+                detailsBuilder.AppendLine("  ===================");
+
+                ex = ex.InnerException;
+            }
+
+            Error(detailsBuilder.ToString());
+        }
+
         public void Debug(string message)
         {
             WriteLog(message, LogLevel.Debug);
@@ -53,6 +79,18 @@ namespace Logger
             if (level > _level)
                 return;
 
+            System.Threading.Tasks.TaskFactory factory = new System.Threading.Tasks.TaskFactory();
+            factory.StartNew(() =>
+                {
+                    lock (_syncObject)
+                    {
+                        using (var sw = new System.IO.StreamWriter(@"c:\temp\mr.log", true))
+                        {
+                            sw.WriteLine(string.Format("{0} [{1}]  {2}", DateTime.Now, level, message));
+                            sw.Close();
+                        }
+                    }
+                });
             //TODO: Write log
         }
     }

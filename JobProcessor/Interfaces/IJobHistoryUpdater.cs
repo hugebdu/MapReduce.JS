@@ -6,11 +6,9 @@ using JobProcessor.Model;
 
 namespace JobProcessor.Interfaces
 {
-    public interface IJobSupplier
+    public interface IJobHistoryUpdater
     {
-        JobInfo GetNextJob();
-
-        bool RemoveJob(JobInfo jobInfo);
-        bool ReturnJob(JobInfo jobInfo);
+        void AddChunckInfo(JobChunk chunk);
+        void UpdateJobStatus(JobInfo jobInfo, JobProcessStatus status);
     }
 }

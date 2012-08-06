@@ -6,8 +6,8 @@ using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Diagnostics;
 using Microsoft.WindowsAzure.ServiceRuntime;
 using Microsoft.WindowsAzure.StorageClient;
-using Microsoft.ApplicationServer.Caching;
 using Microsoft.ServiceBus;
+using JobProcessor.Interfaces;
 
 namespace JobProcessor
 {
@@ -21,17 +21,17 @@ namespace JobProcessor
 
         public CloudQueueClient QueueClient { get; private set; }
         public CloudBlobClient BlobClient { get; private set; }
-        public DataCache CacheClient { get; private set; }
+        public ICache CacheClient { get; private set; }
         
         private AzureClient()
         {
-            CloudStorageAccount.SetConfigurationSettingPublisher(ConfigurationSettingPublisher);
-            var client = CloudStorageAccount.FromConfigurationSetting("idc");
-            this.QueueClient = client.CreateCloudQueueClient();
-            this.BlobClient = client.CreateCloudBlobClient();
-            
-            var factory = new DataCacheFactory();
-            this.CacheClient = factory.GetDefaultCache();
+            //CloudStorageAccount.SetConfigurationSettingPublisher(ConfigurationSettingPublisher);
+            //var client = CloudStorageAccount.FromConfigurationSetting("idc");
+            var storageAccount = new CloudStorageAccount(new StorageCredentialsAccountAndKey(RoleSettings.AccountName, RoleSettings.AccountKey), true);
+            storageAccount = CloudStorageAccount.DevelopmentStorageAccount;
+            this.QueueClient = storageAccount.CreateCloudQueueClient();
+            this.BlobClient = storageAccount.CreateCloudBlobClient();
+            this.CacheClient = new Implementation.DefaultCache();
         }
 
         private static void ConfigurationSettingPublisher(string s, Func<string, bool> func)

@@ -11,38 +11,62 @@ namespace JobProcessor.Implementation
 {
     class CacheJobChunkRegistrator : IJobChunkRegistrator
     {
+        #region Consts
         private const string JobSumKeyPrefix = "Job_";
         private const string JobChunkKeyPrefix = "Chunk_";
+        #endregion Consts
 
+        #region Events
         public event Action<object, string> JobMapComplete;
         public event Action<object, string> JobReduceComplete;
+        #endregion Events
 
+        #region Public Methods
         public void RegisterNewMapChunk(JobChunkUid chunkUid)
         {
+            Logger.Log.Instance.Info(string.Format("CacheJobChunkRegistrator. Register new map chunk. JobId '{0}', ChunkId '{1}'",
+                chunkUid.JobId,
+                chunkUid.ChunkId));
             UpdateJobSummeryInCache(chunkUid);
             AddChunkToCache(chunkUid, ProcessingMode.Map);
         }
         
         public void RegisterNewReduceChunk(JobChunkUid chunkUid)
         {
+            Logger.Log.Instance.Info(string.Format("CacheJobChunkRegistrator. Register new reduce chunk. JobId '{0}', ChunkId '{1}'",
+                chunkUid.JobId,
+                chunkUid.ChunkId));
             UpdateJobSummeryInCache(chunkUid);
             AddChunkToCache(chunkUid, ProcessingMode.Reduce);
         }
 
         public void UpdateChunkMapSent(JobChunkUid chunkUid)
         {
+            Logger.Log.Instance.Info(string.Format("CacheJobChunkRegistrator. Map chunk sent. JobId '{0}', ChunkId '{1}'",
+                chunkUid.JobId,
+                chunkUid.ChunkId));
+
             UpdateChunkStatusInCache(chunkUid, ChunkStatus.MapSent, ProcessingMode.Map);
         }
 
         public void UpdateChunkMapComplete(JobChunkUid chunkUid)
         {
+            Logger.Log.Instance.Info(string.Format("CacheJobChunkRegistrator. Map chunk complete. JobId '{0}', ChunkId '{1}'",
+                chunkUid.JobId,
+                chunkUid.ChunkId));
+            
             UpdateChunkStatusInCache(chunkUid, ChunkStatus.MapCompleted, ProcessingMode.Map);
             if (AllJobChunksCompleted(chunkUid.JobId, ProcessingMode.Map))
             {
+                Logger.Log.Instance.Info(string.Format("CacheJobChunkRegistrator. Map of all job chunks complete. JobId '{0}'",
+                    chunkUid.JobId));
+                
                 var jobMapComplete = JobMapComplete;
                 if (jobMapComplete != null)
                 {
                     // TODO: Cleanup cache for map-completed job
+                    Logger.Log.Instance.Info(string.Format("CacheJobChunkRegistrator. Raise job map complete event for JobId '{0}'",
+                        chunkUid.JobId));
                     jobMapComplete(this, chunkUid.JobId);
                 }
             }
@@ -50,23 +74,36 @@ namespace JobProcessor.Implementation
 
         public void UpdateChunkReduceSent(JobChunkUid chunkUid)
         {
+            Logger.Log.Instance.Info(string.Format("CacheJobChunkRegistrator. Reduce chunk sent. JobId '{0}', ChunkId '{1}'",
+                chunkUid.JobId,
+                chunkUid.ChunkId));
             UpdateChunkStatusInCache(chunkUid, ChunkStatus.ReduceSent, ProcessingMode.Reduce);
         }
 
         public void UpdateChunkReduceComplete(JobChunkUid chunkUid)
         {
+            Logger.Log.Instance.Info(string.Format("CacheJobChunkRegistrator. Reduce chunk complete. JobId '{0}', ChunkId '{1}'",
+                chunkUid.JobId,
+                chunkUid.ChunkId));
             UpdateChunkStatusInCache(chunkUid, ChunkStatus.ReduceCompleted, ProcessingMode.Reduce);
             if (AllJobChunksCompleted(chunkUid.JobId, ProcessingMode.Reduce))
             {
+                Logger.Log.Instance.Info(string.Format("CacheJobChunkRegistrator. Reduce of all job chunks complete. JobId '{0}'",
+                    chunkUid.JobId));
+
                 var jobReduceComplete = JobReduceComplete;
                 if (jobReduceComplete != null)
                 {
+                    Logger.Log.Instance.Info(string.Format("CacheJobChunkRegistrator. Raise job reduce complete event. JobId '{0}'",
+                        chunkUid.JobId));
                     // TODO: Cleanup cache for reduce-completed job
                     jobReduceComplete(this, chunkUid.JobId);
                 }
             }
         }
+        #endregion Public methods
 
+        #region Private methods
         private bool AllJobChunksCompleted(string jobId, ProcessingMode mode)
         {
             var sumKey = GetJobSummeryKey(jobId);
@@ -74,7 +111,7 @@ namespace JobProcessor.Implementation
             var completedStatus = mode == ProcessingMode.Map ? ChunkStatus.MapCompleted : ChunkStatus.ReduceCompleted;
             foreach (var chunkId in jobSplitDetails.JobChunkIds)
             {
-                var chunkKey = GetJobChunkKey(new JobChunkUid() { JobId = jobId, SplitId = chunkId }, mode);
+                var chunkKey = GetJobChunkKey(new JobChunkUid() { JobId = jobId, ChunkId = chunkId }, mode);
                 var chunkStatus = AzureClient.Instance.CacheClient[chunkKey] as JobChunkStatus;
                 if (chunkStatus.Status != completedStatus)
                     return false;
@@ -93,9 +130,9 @@ namespace JobProcessor.Implementation
                 jobSummery.JobId = chunkUid.JobId;
             }
 
-            if (!jobSummery.JobChunkIds.Contains(chunkUid.SplitId))
+            if (!jobSummery.JobChunkIds.Contains(chunkUid.ChunkId))
             {
-                jobSummery.JobChunkIds.Add(chunkUid.SplitId);
+                jobSummery.JobChunkIds.Add(chunkUid.ChunkId);
                 AzureClient.Instance.CacheClient.Add(sumKey, jobSummery);
             }
         }
@@ -110,7 +147,7 @@ namespace JobProcessor.Implementation
             };
             
             chunkStatus.ChunkUid.JobId = chunkUid.JobId;
-            chunkStatus.ChunkUid.SplitId = chunkUid.SplitId;
+            chunkStatus.ChunkUid.ChunkId = chunkUid.ChunkId;
 
             AzureClient.Instance.CacheClient.Add(chunkKey, chunkStatus);
         }
@@ -134,7 +171,8 @@ namespace JobProcessor.Implementation
 
         private string GetJobChunkKey(JobChunkUid chunkUid, ProcessingMode mode)
         {
-            return string.Format("{3}_{0}{1}_{2}", JobChunkKeyPrefix, chunkUid.JobId, chunkUid.SplitId, mode);
+            return string.Format("{3}_{0}{1}_{2}", JobChunkKeyPrefix, chunkUid.JobId, chunkUid.ChunkId, mode);
         }
+        #endregion Private methods
     }
 }

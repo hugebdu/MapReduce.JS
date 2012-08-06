@@ -71,6 +71,11 @@
     <Compile Include="Exceptions\UnknownChunkException.cs" />
     <Compile Include="Exceptions\JobProcessorException.cs" />
     <Compile Include="Implementation\CacheJobChunkRegistrator.cs" />
+    <Compile Include="Implementation\Cache\AzureCache.cs" />
+    <Compile Include="Implementation\Cache\DefaultCache.cs" />
+    <Compile Include="Implementation\DefaultJobHistoryUpdater.cs" />
+    <Compile Include="Interfaces\ICache.cs" />
+    <Compile Include="Interfaces\IJobHistoryUpdater.cs" />
     <Compile Include="Interfaces\IMapResultsCollector.cs" />
     <Compile Include="Implementation\MapResultsCollector.cs" />
     <Compile Include="Implementation\SBJobChunkResultWatcher.cs" />
@@ -81,7 +86,7 @@
     <Compile Include="Interfaces\IJobChunkDispatcher.cs" />
     <Compile Include="Implementation\Factory.cs" />
     <Compile Include="Interfaces\IFactory.cs" />
-    <Compile Include="Manage\JobProcessStatus.cs" />
+    <Compile Include="Model\JobProcessStatus.cs" />
     <Compile Include="Model\JobChunkUid.cs" />
     <Compile Include="Model\JobChunkStatus.cs" />
     <Compile Include="Model\JobChunk.cs" />
@@ -94,6 +99,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Implementation\DefaultJobSupplier.cs" />
     <Compile Include="Interfaces\IJobSupplier.cs" />
+    <Compile Include="RoleSettings.cs" />
     <Compile Include="WorkerRole.cs" />
   </ItemGroup>
   <ItemGroup>

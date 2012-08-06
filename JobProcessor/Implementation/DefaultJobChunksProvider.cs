@@ -13,6 +13,9 @@ namespace JobProcessor.Implementation
     {
         public IEnumerable<JobChunk> SplitJob(JobInfo info)
         {
+            Logger.Log.Instance.Info(string.Format("DefaultJobChunksProvider. Split job. JobId '{0}'",
+                info.JobId));
+
             var blobDirectory = AzureClient.Instance.BlobClient.GetBlobDirectoryReference(info.DataSource.ToString());
             if (blobDirectory == null)
                 throw new JobProcessorException("Data source is not available");
@@ -26,10 +29,15 @@ namespace JobProcessor.Implementation
                     Data = blob.Uri,
                     Handler = info.Mapper,
                     Mode = ProcessingMode.Map,
+                    ResponseQueueName = JobProcessor.RoleSettings.ChunkResponseQueue
                 };
 
-                chunk.ChunkUid.SplitId = Guid.NewGuid().ToString();
+                chunk.ChunkUid.ChunkId = Guid.NewGuid().ToString();
                 chunk.ChunkUid.JobId = info.JobId;
+
+                Logger.Log.Instance.Info(string.Format("DefaultJobChunksProvider. Create new map chunk for JobId '{0}'. ChunkId: '{1}'",
+                    chunk.ChunkUid.JobId,
+                    chunk.ChunkUid.ChunkId));
 
                 yield return chunk;
             }

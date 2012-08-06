@@ -10,6 +10,6 @@ namespace JobProcessor.Model
     public class JobChunkUid
     {
         public string JobId { get; set; }
-        public string SplitId { get; set; }
+        public string ChunkId { get; set; }
     }
 }

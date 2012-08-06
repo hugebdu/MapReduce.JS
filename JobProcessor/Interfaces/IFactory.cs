@@ -10,6 +10,7 @@ namespace JobProcessor.Interfaces
         JobProcessor.Interfaces.IJobChunkRegistrator CreateJobChunkRegistrator();
         JobProcessor.Interfaces.IJobSupplier CreateJobSupplier();
         JobProcessor.Interfaces.IJobChunkResultWatcher CreateChunkResultWatcher();
-        JobProcessor.Interfaces.IMapResultsCollector CreateMapResultsCollector(JobInfo jobInfo);        
+        JobProcessor.Interfaces.IMapResultsCollector CreateMapResultsCollector(JobInfo jobInfo);
+        JobProcessor.Interfaces.IJobHistoryUpdater CreateJobHistoryUpdater();
     }
 }

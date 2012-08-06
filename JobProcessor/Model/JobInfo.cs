@@ -7,7 +7,7 @@ namespace JobProcessor.Model
 {
     public class JobInfo
     {
-        public Uri DataSource { get; set; }
+        public string DataSource { get; set; }
         public Uri Mapper { get; set; }
         public Uri Reducer { get; set; }
         public string JobId { get; set; }

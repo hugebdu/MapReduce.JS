@@ -9,39 +9,62 @@ namespace JobProcessor.Manage
 {
     class JobsMonitor
     {
+        #region Data Members
         private IJobSupplier _jobSupplier;
         private JobProcessManager _jobManager;
+        #endregion Data Members
 
+        #region Ctor
         public JobsMonitor(IFactory factory)
         {
             Logger.Log.Instance.Info("JobMonitor. Constructor");
             _jobSupplier = factory.CreateJobSupplier();
             _jobManager = new JobProcessManager(factory);
         }
+        #endregion Ctor
 
+        #region Public Methods
         public void CheckForNewJobs()
         {
             Logger.Log.Instance.Info("JobMonitor. Start checking for new jobs");
             while (true)
             {
-                var job = _jobSupplier.GetNextJob();
-                if (job == null)
+                var jobInfo = _jobSupplier.GetNextJob();
+                if (jobInfo == null)
                 {
                     Logger.Log.Instance.Info("JobMonitor. No more jobs. Return.");
                     break;
                 }
 
                 Logger.Log.Instance.Info(string.Format("JobMonitor. Got a job. MessageId: {0}, PopReceipt: {1}, DataSource: {2}. Process.",
-                    job.JobMessageId,
-                    job.PopReceipt,
-                    job.DataSource));
+                    jobInfo.JobMessageId,
+                    jobInfo.PopReceipt,
+                    jobInfo.DataSource));
 
                 // TODO: Define callback function
-                _jobManager.ProcessJob(job, OnResumeJobProcessing);
+                if (_jobManager.ProcessJob(jobInfo, OnResumeJobProcessing))
+                {
+                    Logger.Log.Instance.Info(string.Format("JobMonitor. Job started. MessageId: {0}, PopReceipt: {1}, DataSource: {2}. Process.",
+                        jobInfo.JobMessageId,
+                        jobInfo.PopReceipt,
+                        jobInfo.DataSource));
+
+                    _jobSupplier.RemoveJob(jobInfo);
+                }
+                else
+                {
+                    Logger.Log.Instance.Info(string.Format("JobMonitor. Job failed to start. Return it to the queue MessageId: {0}, PopReceipt: {1}, DataSource: {2}. Process.",
+                        jobInfo.JobMessageId,
+                        jobInfo.PopReceipt,
+                        jobInfo.DataSource));
+
+                    _jobSupplier.ReturnJob(jobInfo);
+                }
             }
         }
+        #endregion Public Method
 
-        
+        #region Private methods
         private void OnResumeJobProcessing(JobInfo jobInfo, JobProcessStatus status)
         {
             Logger.Log.Instance.Info(string.Format("JobMonitor. OnResumeJobProcessing. MessageId: {0},  PopReceipt: {1}. Status: {2}",
@@ -52,7 +75,6 @@ namespace JobProcessor.Manage
             switch (status)
             {
                 case JobProcessStatus.Completed:
-                    _jobSupplier.RemoveJob(jobInfo);
                     break;
 
                 case JobProcessStatus.Failed:
@@ -64,5 +86,6 @@ namespace JobProcessor.Manage
                     break;
             }
         }
+        #endregion Private methods
     }
 }

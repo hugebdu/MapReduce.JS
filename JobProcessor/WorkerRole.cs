@@ -23,6 +23,7 @@ namespace JobProcessor
         void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             StringBuilder detailsBuilder = new StringBuilder();
+            detailsBuilder.AppendLine("WorkerRole. Caught unhandled exception:");
             Exception ex = e.ExceptionObject as Exception;
             int i = 0;
             while (ex != null)
@@ -31,26 +32,35 @@ namespace JobProcessor
                     i++,
                     ex.GetType(),
                     ex.Message));
-                detailsBuilder.AppendLine(string.Format("     Stack trace: {0}", ex.StackTrace));
+                detailsBuilder.AppendLine("  === Stack trace ===");
+                detailsBuilder.AppendLine(ex.StackTrace);
+                detailsBuilder.AppendLine("  ===================");
 
                 ex = ex.InnerException;
             }
 
-            Logger.Log.Instance.Error(string.Format("WorkerRole. Caught unhandled exception: {0}", detailsBuilder.ToString()));
+            Logger.Log.Instance.Error(detailsBuilder.ToString());
         }
 
         public override void Run()
         {
-            // This is a sample worker implementation. Replace with your logic.
-            Trace.WriteLine("$projectname$ entry point called", "Information");
-            Logger.Log.Instance.Info("WorkerRole. Start worker role");
-            var monitor = new JobsMonitor(new DefaultFactory());
-
-            while (true)
+            try
             {
-                Logger.Log.Instance.Info("WorkerRole. Check for new jobs");
-                monitor.CheckForNewJobs();
-                Thread.Sleep(10000);
+                // This is a sample worker implementation. Replace with your logic.
+                Trace.WriteLine("$projectname$ entry point called", "Information");
+                Logger.Log.Instance.Info("WorkerRole. Start worker role");
+                var monitor = new JobsMonitor(new DefaultFactory());
+
+                while (true)
+                {
+                    Logger.Log.Instance.Info("WorkerRole. Check for new jobs");
+                    monitor.CheckForNewJobs();
+                    Thread.Sleep(10000);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log.Instance.Exception(ex, "Fatal error. Shut down worker role.");
             }
         }
 

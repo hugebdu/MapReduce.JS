@@ -39,6 +39,12 @@ namespace JobProcessor.Implementation
         {
             return new MapResultsCollector(jobInfo);
         }
+
+        public IJobHistoryUpdater CreateJobHistoryUpdater()
+        {
+            return new DefaultJobHistoryUpdater();
+        }
+
         #endregion Factory methods
     }
 }
