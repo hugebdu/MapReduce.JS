@@ -5,6 +5,7 @@ using System.Text;
 using JobProcessor.Model;
 using JobProcessor.Exceptions;
 using JobProcessor.Interfaces;
+using Microsoft.WindowsAzure.StorageClient;
 
 namespace JobProcessor.Implementation
 {
@@ -65,12 +66,15 @@ namespace JobProcessor.Implementation
             
             foreach (var item in _results)
             {
-                Uri dataUri = UploadToBlob(item.Key, item.Value);
+                var blob = UploadToBlob(item.Key, item.Value);
                 var chunk = new JobChunk()
                 {
                     Mode = ProcessingMode.Reduce,
                     Handler = _jobInfo.Reducer,
-                    Data = dataUri,
+                    Data = blob.Uri.ToString(),
+                    IsBlob = true,
+                    BlobContainer = blob.Container.Name,
+                    BlobName = (blob as CloudBlockBlob).Name,
                     ResponseQueueName = JobProcessor.RoleSettings.ChunkResponseQueue
                 };
                 chunk.ChunkUid.JobId = JobId;
@@ -83,7 +87,7 @@ namespace JobProcessor.Implementation
         #endregion Public methods
 
         #region Private methods
-        private Uri UploadToBlob(string key, string value)
+        private CloudBlob UploadToBlob(string key, string value)
         {
             //TODO: add errors handling + record created blobs
             var directoryRef = AzureClient.Instance.BlobClient.GetBlobDirectoryReference(string.Format("mapreducejs_{0}", JobId));
@@ -96,7 +100,7 @@ namespace JobProcessor.Implementation
             containerRef.CreateIfNotExist();
             var blobRef = containerRef.GetBlobReference(key);
             blobRef.UploadText(value);
-            return blobRef.Uri;
+            return blobRef;
         }
 
         private string Merge(string value1, string value2)

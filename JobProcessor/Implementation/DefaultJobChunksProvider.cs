@@ -26,7 +26,10 @@ namespace JobProcessor.Implementation
             {
                 var chunk = new JobChunk()
                 {
-                    Data = blob.Uri,
+                    Data = blob.Uri.ToString(),
+                    IsBlob = true,
+                    BlobContainer = blob.Container.Name,
+                    BlobName = (blob as CloudBlockBlob).Name,
                     Handler = info.Mapper,
                     Mode = ProcessingMode.Map,
                     ResponseQueueName = JobProcessor.RoleSettings.ChunkResponseQueue

@@ -13,6 +13,10 @@ app.listen(8082, function () {
   var addr = app.address();
 });
 
+app.get('/', function (req, res) {
+  res.sendfile(__dirname + '/index.html');
+});
+
 util.log('<Server>: Create curator');
 var curatorInstance = new curator(app);
 util.log('<Server>: Start curator');

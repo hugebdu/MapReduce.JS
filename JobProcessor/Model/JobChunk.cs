@@ -16,9 +16,14 @@ namespace JobProcessor.Model
     public class JobChunk
     {
         public JobChunkUid ChunkUid { get; private set; }
-        public Uri Data { get; set; }
+        public string Data { get; set; }
+        public bool IsBlob { get; set; }
+        public string BlobContainer { get; set; }
+        public string BlobName { get; set; }
+
         public string Handler { get; set; }
         public ProcessingMode Mode { get; set; }
+        
         public string ResponseQueueName { get; set; }
 
         public JobChunk()

@@ -2,23 +2,20 @@ var azure = require('azure')
   , util = require('util')
   , events = require('events');
 
-process.env["AZURE_STORAGE_ACCOUNT"] = "vainshteinalexander";
-process.env["AZURE_STORAGE_ACCESS_KEY"] = "NL3ag1ZkU7794cAspW+HBHlKXcmg+j0XpyY6TOK5X89KIqB/Rog+Yn4NdpHQ20YEpJ/p/lewHXLWoMpESFRLnw==";
 
 var queueCheckDelay = 5000;
-var jobsQueueName = 'jobsqueue';
+var jobsQueueName = 'jobchunks';
   
-exports = module.exports = JobsMonitor;
-
 /**
 * Creates a new JobsMaster object.
 *
 * @param {object} [app]          The server object.
 */
-function JobsMonitor() {
+var JobsMonitor = function () {
 	util.log("<JobsMonitor>: Create new Jobs object");
 	
 	this.queueService = azure.createQueueService();
+	this.Read = false;
 
 	this.queueService.createQueueIfNotExists(jobsQueueName,function(error){
 		if(!error){
@@ -29,20 +26,18 @@ function JobsMonitor() {
 		}
 	});  
 
-	setInterval(checkJobQueue, queueCheckDelay, this);
+	setInterval(this.checkJobQueue, queueCheckDelay, this);
 	//setTimeout(sendMessage, queueCheckDelay);
 }
 
 util.inherits(JobsMonitor, events.EventEmitter);  
 
-
-function sendMessage(JobsMonitor){
-	util.log("<JobsMonitor>: Send new message....");
+JobsMonitor.prototype.returnMessage = function(msg){
+	util.log("<JobsMonitor>: Return message....");
 	var creatingMessageOptions = {visibilitytimeout: 30 * 60};
-	var message = '{"name":"new message","age":20}';
-	JobsMonitor.queueService.createMessage(
+	this.queueService.createMessage(
 		jobsQueueName,
-		message,
+		msg,
 		//creatingMessageOptions,
 		function(error, queueMessageResult, response){
 			if(!error){
@@ -54,7 +49,8 @@ function sendMessage(JobsMonitor){
 		});
 }
 
-function checkJobQueue(JobsMonitor){
+JobsMonitor.prototype.checkJobQueue = function(JobsMonitor){
+	if(!JobsMonitor.Read)return;
 	util.log("<JobsMonitor>: Check for new message....");
 	var gettingMessageOptions = {numofmessages: 1, visibilitytimeout: 5};
 	JobsMonitor.queueService.getMessages(
@@ -89,4 +85,7 @@ function processJobMessage(JobsMonitor, message){
 	util.log("<JobsMonitor>: Start process message");
 	JobsMonitor.emit('jobReceived', message)
 }
+
+
+exports = module.exports = JobsMonitor;
 
