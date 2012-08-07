@@ -44,24 +44,31 @@ function NodeCtrl($scope, $filter, $http)
         $scope.status = $scope.StatusLabel.Running;
         $scope.job.progress = 0;
         $scope.log.println("Started job '" + $scope.job.details.name + "'");
-        var f = eval("(" + $scope.job.handler + ")");
-        f();
-//        $scope.worker = new Worker("js/worker.js");
-//        $scope.worker.onmessage = function(msg) {
-//            $scope.$apply(function() {
-//                switch (msg.data.type) {
-//                    case 'progress' :
-//                        $scope.job.progress = msg.data.progress;
-//                        break;
-//                    case 'done' :
-//                        $scope.log.println("Completed running job '" + $scope.job.name + "'");
-//                        $scope.status = $scope.StatusLabel.Idle;
-//                        $scope.worker.terminate();
-//                        $scope.worker = {};
-//                        break;
-//                }
-//            });
-//        };
+
+        var job = $scope.job;
+        var f = eval("(" + job.handler + ")");
+        var outcome = {
+            "jobId": job.details.jobId,
+            "splitId": job.details.splitId,
+            "result": [],
+            "done": false
+        };
+
+        for (var i = 0; i < job.data.length; i++)
+        {
+            outcome.result.push(f(job.data[i]));
+            job.progress = parseInt(job.data.length / 100 * i);
+            if (outcome.result.length == 10)
+            {
+                $scope.socket.emit('done', outcome);
+                outcome.result = [];
+            }
+        }
+        outcome.done = true;
+        $scope.socket.emit('done', outcome);
+        $scope.log.println("Finished job '" + $scope.job.details.name + "'");
+        $scope.status = $scope.StatusLabel.Idle;
+
     };
 
     $scope.connect = function() {
@@ -83,10 +90,16 @@ function NodeCtrl($scope, $filter, $http)
         $scope.socket.on('job', function(job) {
             $scope.$apply(function() {
                 $scope.job = job;
-                //TODO: data & handler
                 $scope.run();
             });
         });
+
+        $scope.socket.on('disconnect', function() {
+            $scope.$apply(function() {
+                $scope.log.println("Disconnected from " + $scope.general.server);
+                $scope.status = $scope.StatusLabel.Disconnected;
+            });
+        });                                                                      ;
 
         $scope.socket.on('register', function(msg) {
             $scope.$apply(function() {
