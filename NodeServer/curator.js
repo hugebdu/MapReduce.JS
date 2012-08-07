@@ -31,7 +31,6 @@ function Curator(app) {
 
 function _initialize(curator, app){
 	curator.server = app;
-	curator.curatorId = generateGuid();
 }
 
 var activeCurator;
@@ -39,23 +38,23 @@ var blobService = azure.createBlobService();
  
 Curator.prototype.start = function (){
 	activeCurator = this;
+	this.curatorId = generateGuid();
 	util.log("<Curator>: Curator.start");
-	this.io = sio.listen(this.server);
+	this.io = sio.listen(this.server,{ log: false });
 	this.activeNodes = {};
-	util.log("<Curator>: Curator.activeNodes:" + this.activeNodes);
 	this.jobMonitor = new jobsmonitor();
 	this.responseClients = {};
 	this.messages = {};
 	
 	this.jobMonitor.on('jobReceived',function(msg){
-			util.log('<Curator>: Curator.receive job chunk ' + msg);
+			util.log('<Curator>: Receive job chunk');
 			var freeNode = activeCurator.getFreeNode();
 			if(freeNode){
 				var srvMsg = JSON.parse(msg);
 				
 				blobService.getBlobToText(srvMsg.BlobContainer,srvMsg.BlobName, function(error,text, blobResult, response){
 					if(!error){
-						util.log('<Curator>: Read data from blob: ' + text);
+						util.log('<Curator>: Read data from blob ');
 						var clientMsg = {
 									"details" : {
 										"name" : srvMsg.ChunkUid.JobName,
@@ -71,11 +70,11 @@ Curator.prototype.start = function (){
 							activeCurator.responseClients[srvMsg.ResponseQueueName] = new ResponseClient(srvMsg.ResponseQueueName);
 						activeCurator.messages[freeNode.nodeId] = srvMsg;
 						
-						util.log('<Curator>: Emit job event for node ' + freeNode.nodeId);
-						util.log('<Curator>: Send JSON to client ' + clientMsg.details.name);
+						util.log('<Curator>: Emit job event for free node');
+						util.log('<Curator>: Send JSON to free node');
 						freeNode.currentStatus = "busy";
-						activeCurator.jobMonitor.Read = activeCurator.getFreeNode()?true:false;
-						util.log('<Curator>: Set jobMonitor.Read = ' + activeCurator.jobMonitor.Read);
+						updateJobMasterReadState(activeCurator);	
+						freeNode.results = [];
 						freeNode.emit('job', clientMsg);					
 					}
 					else{
@@ -91,19 +90,17 @@ Curator.prototype.start = function (){
 		
 	this.io.sockets.on('connection', function (socket) {
 		// Node connected
-		util.log('<Curator>: Connected new socket id: ' + socket.id);
-		util.log("<Curator>: My activeNodes:" + activeCurator.activeNodes);
+		util.log('<Curator>: Connected new socket');
 		socket.nodeId = registerNode(activeCurator);
 		socket.currentStatus = 'new';
-		util.log('<Curator>: Emit register for nodeId:' + socket.nodeId);
+		util.log('<Curator>: Emit register new socket');
 		socket.emit('register',{ nodeId: socket.nodeId});
 		
 		// Got node info
 		socket.on('userInfo', function (info) {
-			util.log('<Curator>: Client ' + socket.nodeId + ' sent info: ' + info);
+			util.log('<Curator>: Got UserInfo event ');
 			socket.currentStatus = 'idle';
-			activeCurator.jobMonitor.Read = activeCurator.getFreeNode()?true:false;
-			util.log('<Curator>: Set jobMonitor.Read = ' + activeCurator.jobMonitor.Read);
+			updateJobMasterReadState(activeCurator);
 			updateNodeInfo(activeCurator,socket.nodeId,info);
 		});
 
@@ -114,18 +111,42 @@ Curator.prototype.start = function (){
 		});
 
 		// Node completed the work
-		socket.on('complete', function () {
-			util.log('<Curator>: Complete chunk: ' + socket.nodeId);
-			var msg = this.messages[socket.nodeId];
-			this.responseClients[msg.ResponseQueueName].sendMessage("hello from response");
-			socket.currentStatus = 'idle';
-			activeCurator.jobMonitor.Read = activeCurator.getFreeNode()?true:false; 
-			util.log('<Curator>: Set jobMonitor.Read = ' + activeCurator.jobMonitor.Read);
+		socket.on('done', function (partialResult) {
+			try
+			{
+				util.log('<Curator>: Done of job chunk: ' + socket.nodeId);
+				if(!partialResult)return;
+				
+				socket.results = (socket.results ? socket.results : []).concat(partialResult.result); 
+				if(partialResult.done){
+					util.log('<Curator>: Job chunk is fully done. Send results');
+					var srvMsg = activeCurator.messages[socket.nodeId];
+					
+					var resultMessage = {
+											"ChunkUid" : {
+												"JobId" : srvMsg.ChunkUid.JobId,
+												"JobName" : srvMsg.ChunkUid.JobName,
+												"ChunkId" : srvMsg.ChunkUid.ChunkId
+											},
+											"Data" : socket.results,
+											"ProcessorNodeId" : activeCurator.curatorId
+										};
+					
+					activeCurator.responseClients[srvMsg.ResponseQueueName].sendMessage(resultMessage);
+					socket.currentStatus = 'idle';
+					updateJobMasterReadState(activeCurator); 
+				}
+			}
+			catch(e)
+			{
+				util.log('ERROR IN DONE:' + e.message);
+			}
 		});
 
 		// Node disconnected
 		socket.on('disconnect', function () {
 			util.log('<Curator>: Socket disconnected: ' + socket.nodeId)
+			socket.currentStatus = 'disconnected';
 			unregisterNode(activeCurator,socket.nodeId);
 		});
 		
@@ -159,7 +180,7 @@ Curator.prototype.getFreeNode = function (){
 	util.log("Total client: " + clients.length);
 	for(var i=0; i<clients.length; i++) {
         if (clients[i].currentStatus == 'idle'){
-			util.log("Found free node. Id: " + clients[i].nodeId);
+			util.log("[Found free node]");
 			return clients[i];
 		}
     }
@@ -170,7 +191,7 @@ Curator.prototype.getFreeNode = function (){
 
 function registerNode(curator){
 	var nodeId = generateGuid();
-	util.log('<Curator>:   Assign socket ID = ' + nodeId);
+	//util.log('<Curator>:   Assign socket ID = ' + nodeId);
 	curator.activeNodes[nodeId] = {};
 	updateNodeStatus(nodeId,'new');
 	return nodeId;
@@ -179,13 +200,19 @@ function registerNode(curator){
 function unregisterNode(curator, nodeId){
 	if(!nodeId)return;
 	delete curator.activeNodes[nodeId];
-	curator.jobMonitor.Read = curator.getFreeNode()?true:false; 
+	updateJobMasterReadState(curator); 
 	updateNodeStatus(nodeId,'closed');
+}
+
+function updateJobMasterReadState(curator){
+	if(!curator)return;
+	curator.jobMonitor.Read = curator.getFreeNode()?true:false;
+	util.log('<Curator>: Set jobMonitor.Read = ' + curator.jobMonitor.Read);
 }
 
 function updateNodeStatus(curator, nodeId, status) {
 	try{
-		util.log('<Curator>: Update status to: ' + status + ' for node ' + nodeId); 
+		util.log('<Curator>: Update status to: ' + status); 
 		var command;
 		if(status=='new'){
 			command = util.format("INSERT INTO Node (NodeId, Status, CuratorId) VALUES ('%s','%s','%s')",nodeId, status, curator.curatorId);
@@ -206,7 +233,7 @@ function updateNodeStatus(curator, nodeId, status) {
 
 function updateNodeInfo(curator, nodeId, nodeInfo) {
 	try{
-		util.log('<Curator>: Update node info: ' + nodeInfo + ' for node ' + nodeId); 
+		util.log('<Curator>: Update node info to db'); 
 		curator.activeNodes[nodeId] = nodeInfo;
 		var command = util.format("UPDATE Node SET NodeInfo = '%s', Status = 'idle' WHERE NodeId = '%s' AND CuratorId = '%s'",nodeInfo,nodeId,curator.curatorId);
 		updateDb(command);
@@ -229,9 +256,10 @@ function updateNodeJobProgress(curator,nodeId, jobInfo) {
 }
 
 function updateDb(command) {
+	return;
+	
 	try{
 		util.log('<Curator>:   Perform DB update command: ' + command)
-		
 		sql.query(conn_str, command, function (err, results) {
 			if (err) {
 				util.log("Got error :-( " + err);

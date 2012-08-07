@@ -10,6 +10,8 @@ namespace JobProcessotTest
     {
         static void Main(string[] args)
         {
+            //testSB();
+            //return;
             //mrgen.test();
             //return;
             
@@ -31,8 +33,14 @@ namespace JobProcessotTest
             workerRole.OnStart();
             workerRole.Run();
 
+        }
+
+        static void testSB()
+        {
             try
             {
+                var watcher = new JobProcessor.Implementation.SBJobChunkResultWatcher();
+                watcher.SyncWatch();
             }
             catch (Exception ex)
             {

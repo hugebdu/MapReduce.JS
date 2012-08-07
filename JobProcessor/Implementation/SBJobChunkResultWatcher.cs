@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.IO;
 using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
 using JobProcessor.Interfaces;
@@ -37,6 +38,12 @@ namespace JobProcessor.Implementation
         #endregion Ctor
 
         #region Public Methods
+        internal void SyncWatch()
+        {
+            var queueClient = PrepareWatchingQueue();
+            Watch(queueClient);
+        }
+
         public void StartWatch()
         {
             Logger.Log.Instance.Info("ChunkResultWatcher. Start watch request");
@@ -72,7 +79,7 @@ namespace JobProcessor.Implementation
             var queueClient = (QueueClient)objQueueClient;
             while (true)
             {
-                if (_cancellationTokenSource.IsCancellationRequested)
+                if (_cancellationTokenSource!=null && _cancellationTokenSource.IsCancellationRequested)
                 {
                     Logger.Log.Instance.Info("ChunkResultWatcher. Watcher stopped by cancel request");
                     return;
@@ -118,14 +125,20 @@ namespace JobProcessor.Implementation
             try
             {
                 Logger.Log.Instance.Info(string.Format("ChunkResultWatcher. Got a map result message #{0}. Process.", msg.MessageId));
-
-                var body = msg.GetBody<string>();
-
+                
+                string body = null;
+                using (var streamReader = new System.IO.StreamReader(msg.GetBody<Stream>()))
+                { 
+                    body = streamReader.ReadToEnd();
+                }
+                
                 if (string.IsNullOrEmpty(body))
                 {
                     Logger.Log.Instance.Warning(string.Format("ChunkResultWatcher. Cannot process map result message - body is null"));
                     return;
                 }
+
+                Logger.Log.Instance.Info(string.Format("ChunkResultWatcher. Process map result message: {0}", body));
 
                 var mapResult = Newtonsoft.Json.JsonConvert.DeserializeObject(body, typeof(MapResultMessage)) as MapResultMessage;
                 if (mapResult == null)

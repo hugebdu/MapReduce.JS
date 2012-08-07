@@ -16,7 +16,7 @@ namespace JobProcessor.Implementation
         #endregion Properties
 
         #region Data Members
-        private SortedList<string, string> _results;
+        private SortedList<string, List<string>> _results;
         private JobInfo _jobInfo;
         #endregion Data Members
 
@@ -24,7 +24,7 @@ namespace JobProcessor.Implementation
         public MapResultsCollector(JobInfo jobInfo)
         {
             _jobInfo = jobInfo;
-            _results = new SortedList<string, string>();
+            _results = new SortedList<string, List<string>>();
         }
         #endregion Ctor
 
@@ -44,19 +44,17 @@ namespace JobProcessor.Implementation
                 };
             }
 
-
-            // TODO: Check this logic!!!!!
-            var key = mapResultMessage.Data.Substring(0, mapResultMessage.Data.IndexOf(','));
-            var value = mapResultMessage.Data.Substring(mapResultMessage.Data.IndexOf(',') + 1);
-
-            if (_results.ContainsKey(key))
+            foreach (var keyValuePair in mapResultMessage.Data)
             {
-                var newValue = Merge(_results[key], value);
-                _results[key] = value;
-            }
-            else
-            {
-                _results.Add(key, value);
+                if (_results.ContainsKey(keyValuePair.Key))
+                {
+                    _results[keyValuePair.Key].Add(keyValuePair.Value);
+                }
+                else
+                {
+                    _results.Add(keyValuePair.Key, new List<string> { keyValuePair.Value});
+                }
+                
             }
         }
 
@@ -66,7 +64,8 @@ namespace JobProcessor.Implementation
             
             foreach (var item in _results)
             {
-                var blob = UploadToBlob(item.Key, item.Value);
+                var jsonArray = Newtonsoft.Json.JsonConvert.SerializeObject(item.Value.ToArray());
+                var blob = UploadToBlob(item.Key, jsonArray);
                 var chunk = new JobChunk()
                 {
                     Mode = ProcessingMode.Reduce,
@@ -90,15 +89,15 @@ namespace JobProcessor.Implementation
         private CloudBlob UploadToBlob(string key, string value)
         {
             //TODO: add errors handling + record created blobs
-            var directoryRef = AzureClient.Instance.BlobClient.GetBlobDirectoryReference(string.Format("mapreducejs_{0}", JobId));
+            var directoryRef = AzureClient.Instance.BlobClient.GetBlobDirectoryReference(string.Format("mr{0}", JobId).ToLower());
             directoryRef.Container.CreateIfNotExist();
-            var containerRef = AzureClient.Instance.BlobClient.GetContainerReference(string.Format("mapreducejs_{0}", JobId));
+            //var containerRef = AzureClient.Instance.BlobClient.GetContainerReference(string.Format("mapreducejs_{0}", JobId));
             //containerRef.SetPermissions(new Microsoft.WindowsAzure.StorageClient.BlobContainerPermissions()
             //{
             //    PublicAccess = Microsoft.WindowsAzure.StorageClient.BlobContainerPublicAccessType.Container
             //});
-            containerRef.CreateIfNotExist();
-            var blobRef = containerRef.GetBlobReference(key);
+            //containerRef.CreateIfNotExist();
+            var blobRef = directoryRef.GetBlobReference(key);
             blobRef.UploadText(value);
             return blobRef;
         }

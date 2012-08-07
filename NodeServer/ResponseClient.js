@@ -10,27 +10,27 @@ var ResponseClient = function (queueName) {
 		  LockDuration : 'PT8M'
 		};
 
-	this.serviceBusService.createQueueIfNotExists(queueName,queueOptions,function(error){
+	this.serviceBusService.createQueueIfNotExists(queueName,function(error){
 		if(!error){
 			console.log('Queue exists');
 		}
 		else{
-			console.log('Error creating queue');
+			console.log('Error creating queue: ' + queueName);
 		}
 	});  	
 }
 
 
 ResponseClient.prototype.sendMessage = function (msg){
-	console.log('Send message to SB queue ' + this.QueueName);
-	var message = {
-		body: msg.data
-	};
 	
-	this.serviceBusService.sendQueueMessage(this.QueueName, message, function(error){
+	console.log('Send message to SB queue ' + this.QueueName);	
+	this.serviceBusService.sendQueueMessage(this.QueueName, JSON.stringify(msg).toString(), function(error){
 		if(!error){
 			// message sent
+			console.log('Message sent to SB queue');
 		}
+		else
+			console.log('ERROR: Message NOT sent to SB queue');
 	});
 }
 

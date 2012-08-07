@@ -28,10 +28,12 @@ namespace JobProcessor.Implementation
         #region Public Methods
         public void Dispatch(JobChunk chunk)
         {
-            Logger.Log.Instance.Info(string.Format("QueueJobChunkDispatcher. Dispatch chunk. JobId '{0}', ChunkId '{1}'",
+            var jsonChunk = chunk.ToJson();
+            Logger.Log.Instance.Info(string.Format("QueueJobChunkDispatcher. Dispatch chunk. JobId '{0}', ChunkId '{1}', JSON:\n{2}",
                 chunk.ChunkUid.JobId,
-                chunk.ChunkUid.ChunkId));
-            _queue.AddMessage(new CloudQueueMessage(chunk.ToJson()));
+                chunk.ChunkUid.ChunkId,
+                jsonChunk));
+            _queue.AddMessage(new CloudQueueMessage(jsonChunk));
             _jobChunkRegistrator.UpdateChunkMapSent(chunk.ChunkUid);
         }
         #endregion Public Methods

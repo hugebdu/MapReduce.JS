@@ -25,6 +25,9 @@ namespace JobProcessor
 
         public const int MaxDequeueCount = 10;
 
+
+        public const bool UseDevelopAccount = true;
+
         static RoleSettings()
         {
             ChunkResponseQueue = "mapresults";

@@ -27,8 +27,13 @@ namespace JobProcessor
         {
             //CloudStorageAccount.SetConfigurationSettingPublisher(ConfigurationSettingPublisher);
             //var client = CloudStorageAccount.FromConfigurationSetting("idc");
-            var storageAccount = new CloudStorageAccount(new StorageCredentialsAccountAndKey(RoleSettings.AccountName, RoleSettings.AccountKey), true);
-            storageAccount = CloudStorageAccount.DevelopmentStorageAccount;
+            CloudStorageAccount storageAccount = null;
+            
+            if(RoleSettings.UseDevelopAccount) 
+                storageAccount = CloudStorageAccount.DevelopmentStorageAccount;
+            else
+                storageAccount = new CloudStorageAccount(new StorageCredentialsAccountAndKey(RoleSettings.AccountName, RoleSettings.AccountKey), true);
+            
             this.QueueClient = storageAccount.CreateCloudQueueClient();
             this.BlobClient = storageAccount.CreateCloudBlobClient();
             this.CacheClient = new Implementation.DefaultCache();
