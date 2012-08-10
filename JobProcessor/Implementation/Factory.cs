@@ -40,6 +40,11 @@ namespace JobProcessor.Implementation
             return new MapResultsCollector(jobInfo);
         }
 
+        public IReduceResultsCollector CreateReduceResultsCollector(JobInfo jobInfo)
+        {
+            return new ReduceResultsCollector(jobInfo);
+        }
+
         public IJobHistoryUpdater CreateJobHistoryUpdater()
         {
             return new DefaultJobHistoryUpdater();

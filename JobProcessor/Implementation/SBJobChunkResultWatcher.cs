@@ -20,7 +20,7 @@ namespace JobProcessor.Implementation
         #endregion Constants
 
         #region Events
-        public event Action<object, MapResultMessage> ChunkMapResultArrive;
+        public event Action<object, ChunkResultMessage> ChunkResultArrive;
         #endregion Events
 
         #region Data members
@@ -38,6 +38,7 @@ namespace JobProcessor.Implementation
         #endregion Ctor
 
         #region Public Methods
+        // TEST ONLY
         internal void SyncWatch()
         {
             var queueClient = PrepareWatchingQueue();
@@ -124,7 +125,7 @@ namespace JobProcessor.Implementation
         {
             try
             {
-                Logger.Log.Instance.Info(string.Format("ChunkResultWatcher. Got a map result message #{0}. Process.", msg.MessageId));
+                Logger.Log.Instance.Info(string.Format("ChunkResultWatcher. Got a chunk result message #{0}. Process.", msg.MessageId));
                 
                 string body = null;
                 using (var streamReader = new System.IO.StreamReader(msg.GetBody<Stream>()))
@@ -134,26 +135,28 @@ namespace JobProcessor.Implementation
                 
                 if (string.IsNullOrEmpty(body))
                 {
-                    Logger.Log.Instance.Warning(string.Format("ChunkResultWatcher. Cannot process map result message - body is null"));
+                    Logger.Log.Instance.Warning(string.Format("ChunkResultWatcher. Cannot process chunk result message - body is null"));
                     return;
                 }
 
-                Logger.Log.Instance.Info(string.Format("ChunkResultWatcher. Process map result message: {0}", body));
+                Logger.Log.Instance.Info(string.Format("ChunkResultWatcher. Process chunk result message: {0}", body));
 
-                var mapResult = Newtonsoft.Json.JsonConvert.DeserializeObject(body, typeof(MapResultMessage)) as MapResultMessage;
-                if (mapResult == null)
+                var chunkResult = Newtonsoft.Json.JsonConvert.DeserializeObject(body, typeof(ChunkResultMessage)) as ChunkResultMessage;
+                if (chunkResult == null)
                 {
-                    Logger.Log.Instance.Warning(string.Format("ChunkResultWatcher. Process map result message - cannot get MapResultMsg (null) from body '{0}'", body));
+                    Logger.Log.Instance.Warning(string.Format("ChunkResultWatcher. Process chunk result message - cannot get ChunkResultMessage (null) from body '{0}'", body));
                     return;
                 }
-                Logger.Log.Instance.Info(string.Format("ChunkResultWatcher. Map result message is for JobId '{0}', ChunkId '{1}'",
-                    mapResult.ChunkUid.JobId,
-                    mapResult.ChunkUid.ChunkId));
 
-                var chunkMapResultArrive = ChunkMapResultArrive;
-                if (chunkMapResultArrive != null)
+                Logger.Log.Instance.Info(string.Format("ChunkResultWatcher. {2} сhunk result message is for JobId '{0}', ChunkId '{1}'",
+                    chunkResult.ChunkUid.JobId,
+                    chunkResult.ChunkUid.ChunkId,
+                    chunkResult.Mode));
+
+                var chunkResultArrive = ChunkResultArrive;
+                if (chunkResultArrive != null)
                 {
-                    chunkMapResultArrive(this, mapResult);
+                    chunkResultArrive(this, chunkResult);
                 }
 
                 msg.Complete();
@@ -161,7 +164,7 @@ namespace JobProcessor.Implementation
             catch (Exception ex)
             {
                 msg.Abandon();
-                Logger.Log.Instance.Error(string.Format("ChunkResultWatcher. Failed to process map result message #{1}. Error: {0}", ex.Message, msg.MessageId));
+                Logger.Log.Instance.Error(string.Format("ChunkResultWatcher. Failed to process chunk result message #{1}. Error: {0}", ex.Message, msg.MessageId));
             }
         }
         #endregion Private Methods

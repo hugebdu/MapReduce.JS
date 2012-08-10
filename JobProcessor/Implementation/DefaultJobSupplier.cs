@@ -120,8 +120,7 @@ namespace JobProcessor.Implementation
             jobInfo.JobId = jsonMessage.Property("JobId").Value.ToString();
             jobInfo.JobName = jsonMessage.Property("Name").Value.ToString();
             jobInfo.DataSource = jsonMessage.Property("DataSource").Value.ToString();
-            jobInfo.Mapper = jsonMessage.Property("Mapper").Value.ToString();
-            jobInfo.Reducer = jsonMessage.Property("Reducer").Value.ToString();
+            jobInfo.Handler = jsonMessage.Property("Handler").Value.ToString();
 
             //var parts = message.AsString.Split(',');
             //jobInfo.JobId = parts[0];

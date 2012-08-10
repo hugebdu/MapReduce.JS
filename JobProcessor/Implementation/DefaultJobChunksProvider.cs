@@ -30,7 +30,7 @@ namespace JobProcessor.Implementation
                     IsBlob = true,
                     BlobContainer = blob.Container.Name,
                     BlobName = (blob as CloudBlockBlob).Name,
-                    Handler = info.Mapper,
+                    Handler = info.Handler,
                     Mode = ProcessingMode.Map,
                     ResponseQueueName = JobProcessor.RoleSettings.ChunkResponseQueue
                 };

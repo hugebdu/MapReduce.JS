@@ -5,16 +5,6 @@ using System.Text;
 
 namespace JobProcessor.Model
 {
-    public enum ChunkStatus 
-    {
-        NewMap,
-        MapSent,
-        MapCompleted,
-        NewReduce,
-        ReduceSent,
-        ReduceCompleted
-    }
-
     public class JobChunkStatus
     {
         public JobChunkUid ChunkUid { get; private set; }

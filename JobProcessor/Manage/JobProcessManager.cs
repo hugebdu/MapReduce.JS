@@ -15,8 +15,8 @@ namespace JobProcessor.Manage
         private IJobChunkRegistrator _jobJobChunkRegistrator;
         private IJobChunkResultWatcher _jobChunkResultWatcher;
         private IJobHistoryUpdater _jobHistoryUpdater;
-        private Dictionary<string, IMapResultsCollector> _mapResultsCollectors;
         private IFactory _factory;
+        private Dictionary<string, JobProcessData> _jobProcessDataCollection;
         #endregion Data Members
 
         #region Ctor
@@ -35,10 +35,10 @@ namespace JobProcessor.Manage
             _jobHistoryUpdater = factory.CreateJobHistoryUpdater();
 
             _jobChunkResultWatcher = factory.CreateChunkResultWatcher();
-            _jobChunkResultWatcher.ChunkMapResultArrive += new Action<object, MapResultMessage>(_chunkResultWatcher_ChunkMapResultArrive);
+            _jobChunkResultWatcher.ChunkResultArrive += new Action<object, ChunkResultMessage>(_chunkResultWatcher_ChunkResultArrive);
             _jobChunkResultWatcher.StartWatch();
             
-            _mapResultsCollectors = new Dictionary<string, IMapResultsCollector>();
+            _jobProcessDataCollection = new Dictionary<string, JobProcessData>();
         }
         #endregion Ctor
 
@@ -53,11 +53,12 @@ namespace JobProcessor.Manage
 
                 _jobHistoryUpdater.UpdateJobStatus(jobInfo, JobProcessStatus.New);
 
-                // Job returned (not completed during the invisibility period of previous dequeue)
-                if (_mapResultsCollectors.ContainsKey(jobInfo.JobId))
-                    _mapResultsCollectors.Remove(jobInfo.JobId);
+                if(_jobProcessDataCollection.ContainsKey(jobInfo.JobId))
+                    _jobProcessDataCollection.Remove(jobInfo.JobId);
 
-                _mapResultsCollectors.Add(jobInfo.JobId, _factory.CreateMapResultsCollector(jobInfo));
+                _jobProcessDataCollection.Add(jobInfo.JobId, new JobProcessData(_factory, jobInfo));
+                _jobProcessDataCollection[jobInfo.JobId].JobCompleteCallback = callback;
+
                 foreach (var chunk in _jobChunksProvider.SplitJob(jobInfo))
                 {
                     _jobJobChunkRegistrator.RegisterNewMapChunk(chunk.ChunkUid);
@@ -84,7 +85,7 @@ namespace JobProcessor.Manage
                 Logger.Log.Instance.Info(string.Format("JobMonitor. Job map complete. JobId '{0}'", jobId));
                 _jobHistoryUpdater.UpdateJobStatus(new JobInfo() {JobId = jobId }, JobProcessStatus.MapComplete);
 
-                var splittedMappedData = _mapResultsCollectors[jobId].SplittedMappedData();
+                var splittedMappedData = _jobProcessDataCollection[jobId].MapResultsCollector.SplittedMappedData();
                 foreach (var chunk in splittedMappedData)
                 {
                     _jobJobChunkRegistrator.RegisterNewReduceChunk(chunk.ChunkUid);
@@ -100,16 +101,25 @@ namespace JobProcessor.Manage
             }
         }
 
-        private void _chunkResultWatcher_ChunkMapResultArrive(object sender, MapResultMessage mapResultMessage)
+        private void _chunkResultWatcher_ChunkResultArrive(object sender, ChunkResultMessage mapResultMessage)
         {
             try
             {
-                Logger.Log.Instance.Info(string.Format("JobMonitor. Map stage result arrived for JobId '{0}', ChunkId '{1}'",
+                Logger.Log.Instance.Info(string.Format("JobMonitor. Chunk of {2} stage result arrived for JobId '{0}', ChunkId '{1}'",
                     mapResultMessage.ChunkUid.JobId,
-                    mapResultMessage.ChunkUid.ChunkId));
+                    mapResultMessage.ChunkUid.ChunkId,
+                    mapResultMessage.Mode));
 
-                _mapResultsCollectors[mapResultMessage.ChunkUid.JobId].AddResult(mapResultMessage);
-                _jobJobChunkRegistrator.UpdateChunkMapComplete(mapResultMessage.ChunkUid);
+                if (mapResultMessage.Mode == ProcessingMode.Map)
+                {
+                    _jobProcessDataCollection[mapResultMessage.ChunkUid.JobId].MapResultsCollector.AddResult(mapResultMessage);
+                    _jobJobChunkRegistrator.UpdateChunkMapComplete(mapResultMessage.ChunkUid);
+                }
+                else if (mapResultMessage.Mode == ProcessingMode.Reduce)
+                {
+                    _jobProcessDataCollection[mapResultMessage.ChunkUid.JobId].ReduceResultsCollector.AddResult(mapResultMessage);
+                    _jobJobChunkRegistrator.UpdateChunkReduceComplete(mapResultMessage.ChunkUid);
+                }
             }
             catch (Exception ex)
             {
@@ -122,9 +132,8 @@ namespace JobProcessor.Manage
             try
             {
                 _jobHistoryUpdater.UpdateJobStatus(new JobInfo() { JobId = jobId }, JobProcessStatus.ReduceComplete);
-                
-                // TODO: callback on job complete
-                throw new NotImplementedException();
+                _jobProcessDataCollection[jobId].ReduceResultsCollector.SubmitResult();
+                _jobProcessDataCollection[jobId].JobCompleteCallback(_jobProcessDataCollection[jobId].JobInfo, JobProcessStatus.Completed);
             }
             catch (Exception ex)
             {

@@ -7,12 +7,6 @@ using Newtonsoft.Json.Converters;
 
 namespace JobProcessor.Model
 {
-    public enum ProcessingMode 
-    {
-        Map,
-        Reduce
-    }
-
     public class JobChunk
     {
         public JobChunkUid ChunkUid { get; private set; }

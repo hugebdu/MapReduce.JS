@@ -23,9 +23,16 @@ namespace Logger
         static Log()
         {
             // TODO: Remove
-            System.IO.File.Delete(@"c:\temp\mr.log");
-            Instance = new Log();
+            try
+            {
+                System.IO.File.Delete(@"c:\temp\mr.log");
+            }
+            catch { }
+            
+            Instance = new Log() { Active = true };
         }
+
+        public bool Active { get; set; }
 
         private Log()
 	    {
@@ -76,6 +83,8 @@ namespace Logger
 
         private void WriteLog(string message, LogLevel level)
         {
+            if (!Active)
+                return;
             if (level > _level)
                 return;
 
