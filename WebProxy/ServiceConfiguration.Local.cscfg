@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ServiceConfiguration serviceName="WebProxy" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceConfiguration" osFamily="1" osVersion="*">
+  <Role name="ProxyServiceWebRole">
+    <Instances count="1" />
+    <ConfigurationSettings>
+      <Setting name="Microsoft.WindowsAzure.Plugins.RemoteAccess.Enabled" value="true" />
+      <Setting name="Microsoft.WindowsAzure.Plugins.RemoteAccess.AccountUsername" value="cloud" />
+      <Setting name="Microsoft.WindowsAzure.Plugins.RemoteAccess.AccountEncryptedPassword" value="MIIBnQYJKoZIhvcNAQcDoIIBjjCCAYoCAQAxggFOMIIBSgIBADAyMB4xHDAaBgNVBAMME1dpbmRvd3MgQXp1cmUgVG9vbHMCEBjFtqajjwSxTcOKYwCITN0wDQYJKoZIhvcNAQEBBQAEggEAtuqhqCZr3g360AjbZtt1f+usr1abnItBmisGEUDObUu+JpMkYUirMLIL68xsFDXXdhocA2BXBAkXjCMOfp7D+xqJ06VBYhF21QEEQadnEd5wk3ZErHwImvq5L06qWVimD14AQdl38yVjtmxZqrreX6cVmmnSMNx+ROvwU9AyhLXblbxvOG1f9I+/YzVBt6ObjCU7pFHJhPzMHcOj6sUCM8wXUSekKHP7+GIS6wPdEbEWxtdJSZIwuqFyIPFZ1DeTl3FC7teAOUs4bouLw516nl/sp7nD7oMdvjrHjoWJDHrxh05cjPwo2iXNNnoTMCC4Zq0lz0lqikkjeWOzZSjqIjAzBgkqhkiG9w0BBwEwFAYIKoZIhvcNAwcECHoycRuLQ4aFgBB4OF5+11imWqyyn+ZTqRHB" />
+      <Setting name="Microsoft.WindowsAzure.Plugins.RemoteAccess.AccountExpiration" value="2013-08-10T23:59:59.0000000+03:00" />
+      <Setting name="Microsoft.WindowsAzure.Plugins.RemoteForwarder.Enabled" value="true" />
+      <Setting name="Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" value="UseDevelopmentStorage=true" />
+    </ConfigurationSettings>
+    <Certificates>
+      <Certificate name="Microsoft.WindowsAzure.Plugins.RemoteAccess.PasswordEncryption" thumbprint="47030C0DD1C03DF3F9BD01C7857667A02CA92067" thumbprintAlgorithm="sha1" />
+    </Certificates>
+  </Role>
+</ServiceConfiguration>
