@@ -28,9 +28,9 @@ mapReduceModule.factory('$dataService', function() {
         this.Status =
 
         this.dataSets = [
-            { "id": 0, "name": "Word count input", "url": "http://s3.amazon.com/hugebdu/mapreducejs/wordcount/", "dateCreated": new Date(2012, 7, 1), "status": "ready" },
-            { "id": 1, "name": "Inversed index input", "url": "http://s3.amazon.com/hugebdu/mapreducejs/inversed_index/", "dateCreated": new Date(2012, 7, 2), "status": "ready" },
-            { "id": 2, "name": "Some really hard input", "url": "http://s3.amazon.com/hugebdu/mapreducejs/some_other_input/", "dateCreated": new Date(2012, 7, 3), "status": "in_process" }
+            { "id": 0, "name": "Word count input", "url": "wordcount", "dateCreated": new Date(2012, 7, 1), "status": "ready" },
+            { "id": 1, "name": "Inversed index input", "url": "inversedindex", "dateCreated": new Date(2012, 7, 2), "status": "ready" },
+            { "id": 2, "name": "Some really hard input", "url": "some_other_input", "dateCreated": new Date(2012, 7, 3), "status": "in_process" }
         ];
     };
 });
@@ -39,7 +39,7 @@ mapReduceModule.factory('$jobsService', function() {
     return new function() {
 
         this.jobs = [
-            { "id": "0001", "dataSetId" : 0, "name": "Word count", "description": "job 1 description", "javaScript": "function CountWords() {\r\n\tmap: function(record, collector) {\r\n\t\t\/\/do some map\r\n\t};\r\n\t\r\n\treduce: function(record, collector) {\r\n\t\t\/\/do some reduce\r\n\t};\r\n}" },
+            { "id": "0001", "dataSetId" : 0, "name": "Word count", "description": "MapReduce word count demo", "javaScript": "{\n\tmap: function(word) {\n\t\treturn {\"key\": word, \"value\": 1}\n\t},\n\treduce: function(result) {\n\t\treturn {\n\t\t\t\"key\": result.key,\n\t\t\t\"value\": _.reduce(result.value, function(memo, num) { return memo + num }, 0)\n\t\t};\n\t}\n}" },
             { "id": "0002", "dataSetId" : 1, "name": "Inversed index", "description": "job 2 description", "javaScript": "function CountWords() {\r\n\tmap: function(record, collector) {\r\n\t\t\/\/do some map\r\n\t};\r\n\t\r\n\treduce: function(record, collector) {\r\n\t\t\/\/do some reduce\r\n\t};\r\n}" },
         ];
 
@@ -73,8 +73,34 @@ function DataCtrl($scope, $dataService) {
     };
 }
 
-function JobsListCtrl($scope, $jobsService) {
+function JobsListCtrl($scope, $http, $jobsService, $dataService) {
     $scope.jobs = $jobsService.jobs;
+
+    $scope.run = function(jobId) {
+        var job = $jobsService.getById(jobId);
+        var dataSource = _.find($dataService.dataSets, function(d) { return d.id == job.dataSetId});
+        var payload = {
+            "JobId": jobId,
+                    "Name": job.name,
+                    "DataSource": dataSource.url,
+                    "Handler": job.javaScript
+        };
+
+        $http({
+            "method": "POST",
+            "url": "http://mapreducejs.cloudapp.net/ProxyService.svc/JobRequest/Add",
+            "headers": {
+                "Content-Type": "text/plain"
+            },
+            "data": payload
+        }).success(function(data, status, headers, config) {
+            window.alert("hura!");
+        }).error(function(data, status, headers, config) {
+            window.alert("failed!");
+        });
+
+        //TODO:
+    }
 }
 
 function JobCtrl($scope, $routeParams, $jobsService, $location, $dataService) {

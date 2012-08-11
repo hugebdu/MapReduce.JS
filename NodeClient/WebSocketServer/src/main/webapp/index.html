@@ -2,11 +2,12 @@
 header("Access-Control-Allow-Origin: *");
 ?>
 <!DOCTYPE html>
-<html ng-app>
+<html ng-app="NodeModule">
 <head>
     <title></title>
     <link href="bootstrap/css/bootstrap.css" type="text/css" rel="stylesheet">
     <script type="text/javascript" src="js/angular-1.0.1.js"></script>
+    <script type="text/javascript" src="js/underscore.js"></script>
     <script type="text/javascript" src="js/node.js"></script>
     <script type="text/javascript" src="js/socket.io.js"></script>
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.2.js"></script>
@@ -71,7 +72,7 @@ header("Access-Control-Allow-Origin: *");
         </div>
         <div class="span12 well log-panel">
             <h2>Log:</h2>
-            <pre>{{log.data}}</pre>
+            <pre ng-log="log.data"></pre>
         </div>
     </div>
 </div>

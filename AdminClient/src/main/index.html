@@ -78,7 +78,7 @@
             <tr ng-repeat="job in jobs">
                 <td><a href="#/jobs/{{job.id}}">{{job.id}}</a></td>
                 <td>{{job.name}}</td>
-                <td><button class="btn btn-mini">Run...</button></td>
+                <td><button class="btn btn-mini" ng-click="run(job.id)">Run...</button></td>
             </tr>
             </tbody>
         </table>

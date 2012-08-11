@@ -4,6 +4,20 @@
  * Date: 7/12/12
  */
 
+var nodeModule = angular.module("NodeModule", []);
+
+nodeModule.directive("ngLog", function factory() {
+    return {
+        "restrict": 'A',
+        "link": function(scope, element, attrs, controller) {
+            scope.$watch(attrs['ngLog'], function(newValue, oldValue) {
+                element.text(newValue);
+                element.prop('scrollTop', element.prop('scrollHeight'));
+            });
+        }
+    };
+});
+
 function onDataLoaded(data) {
     alert("Hurra: " + data.length + ' records');
 }
@@ -28,24 +42,15 @@ function NodeCtrl($scope, $filter, $http)
 
     $scope.nodeId = {};
 
-    $scope.job = {}; /*{
-        "details" : {
-            "name" : "Some Job",
-            "jobId" : "1234",
-            "splitId" : "chunk123",
-            "phase" : "Map"
-        },
-        "data" : [],
-        "handler" : "function() { alert('hello') }"
-    };*/
+    $scope.job = {};
 
     $scope.run = function() {
         //TODO:
         $scope.status = $scope.StatusLabel.Running;
         $scope.job.progress = 0;
-        $scope.log.println("Started job '" + $scope.job.details.name + "'");
-
         var job = $scope.job;
+
+        $scope.log.println("Started job '" + job.details.name + "' phase '" + job.details.phase + "'");
         var f = eval("(" + job.handler + ")");
         var outcome = {
             "jobId": job.details.jobId,
@@ -56,7 +61,7 @@ function NodeCtrl($scope, $filter, $http)
 
         for (var i = 0; i < job.data.length; i++)
         {
-            outcome.result.push(f(job.data[i]));
+            outcome.result.push(f[job.details.phase.toLowerCase()](job.data[i]));
             job.progress = parseInt(job.data.length / 100 * i);
             if (outcome.result.length == 10)
             {
@@ -66,7 +71,7 @@ function NodeCtrl($scope, $filter, $http)
         }
         outcome.done = true;
         $scope.socket.emit('done', outcome);
-        $scope.log.println("Finished job '" + $scope.job.details.name + "'");
+        $scope.log.println("Finished job '" + job.details.name + "' phase '" + job.details.phase + "'");
         $scope.status = $scope.StatusLabel.Idle;
 
     };
@@ -95,10 +100,9 @@ function NodeCtrl($scope, $filter, $http)
         });
 
         $scope.socket.on('disconnect', function() {
-            $scope.$apply(function() {
-                $scope.log.println("Disconnected from " + $scope.general.server);
-                $scope.status = $scope.StatusLabel.Disconnected;
-            });
+            $scope.log.println("Disconnected from " + $scope.general.server);
+            $scope.status = $scope.StatusLabel.Disconnected;
+            $scope.socket = {};
         });                                                                      ;
 
         $scope.socket.on('register', function(msg) {
@@ -111,24 +115,38 @@ function NodeCtrl($scope, $filter, $http)
     };
 
     $scope.disconnect = function() {
-        //TODO: disconnect
         if ($scope.socket) {
             $scope.socket.disconnect();
-            $scope.socket = {};
         }
-
-        $scope.status = $scope.StatusLabel.Disconnected;
-        $scope.log.println("Disconnected from " + $scope.general.server);
     };
 
 
     $scope.log = {
+
         data : "",
+
+        _timestamp : function() {
+            var padZeros = function(val, padSize) {
+                var str = val.toString();
+                while (str.length < padSize)
+                    str = "0" + str;
+                return str;
+            };
+            var date = new Date();
+            return padZeros(date.getHours(), 2) + ":" +
+                    padZeros(date.getMinutes(), 2) + ":" +
+                    padZeros(date.getSeconds(), 2) + "." +
+                    padZeros(date.getMilliseconds(), 3);
+        },
+
         println : function(msg) {
             if (this.data)
                 this.data += '\n';
-            this.data += $filter('date')(new Date(), "HH:mm:ss");
+            var date = new Date();
+            this.data += this._timestamp();
             this.data += "   " + msg;
+            var logWindow = $("#logWindow");
+            logWindow.scrollTop(logWindow.prop("scrollHeight"));
         }
     };
 }
