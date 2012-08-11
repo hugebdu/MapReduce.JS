@@ -57,5 +57,12 @@ namespace JobProcessor.Implementation
             }
         }
         #endregion Public Methods
+
+        #region Protected Methods
+        protected string SanitizeJobIdToBlobName()
+        {
+            return System.Text.RegularExpressions.Regex.Replace(JobId, @"[^a-zA-Z\d]", "");
+        }
+        #endregion Protected Methods
     }
 }

@@ -117,7 +117,7 @@ namespace JobProcessor.Implementation
 
             // TODO: Parse JSON and handle errors
             var jsonMessage = Newtonsoft.Json.Linq.JObject.Parse(message.AsString);
-            jobInfo.JobId = jsonMessage.Property("JobId").Value.ToString();
+            jobInfo.JobId = jsonMessage.Property("JobId").Value.ToString() + "_" + Guid.NewGuid().ToString("N");
             jobInfo.JobName = jsonMessage.Property("Name").Value.ToString();
             jobInfo.DataSource = jsonMessage.Property("DataSource").Value.ToString();
             jobInfo.Handler = jsonMessage.Property("Handler").Value.ToString();

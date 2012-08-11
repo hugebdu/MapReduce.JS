@@ -106,6 +106,9 @@ namespace JobProcessor.Implementation
         #region Private methods
         private bool AllJobChunksCompleted(string jobId, ProcessingMode mode)
         {
+            Logger.Log.Instance.Info(string.Format("CacheJobChunkRegistrator. Check for competion of phase {1}. JobId '{0}'",
+                        jobId, mode));
+
             var sumKey = GetJobSummeryKey(jobId);
             var jobSplitDetails = AzureClient.Instance.CacheClient[sumKey] as JobSplitDetails;
             var completedStatus = mode == ProcessingMode.Map ? ChunkStatus.MapCompleted : ChunkStatus.ReduceCompleted;
@@ -113,17 +116,26 @@ namespace JobProcessor.Implementation
             {
                 var chunkKey = GetJobChunkKey(new JobChunkUid() { JobId = jobId, ChunkId = chunkId }, mode);
                 var chunkStatus = AzureClient.Instance.CacheClient[chunkKey] as JobChunkStatus;
+                Logger.Log.Instance.Info(string.Format("   ==> Chunk {0}. Status: {1}",
+                            chunkId, chunkStatus.Status));
                 if (chunkStatus.Status != completedStatus)
+                {
+                    Logger.Log.Instance.Info(string.Format("     ==> Not completed yet"));
                     return false;
+                }
             }
+            Logger.Log.Instance.Info(string.Format("   ==> Phase completed. Clear cache"));
 
             // Clear cache
-            AzureClient.Instance.CacheClient.Remove(sumKey);
             foreach (var chunkId in jobSplitDetails.JobChunkIds)
             {
                 var chunkKey = GetJobChunkKey(new JobChunkUid() { JobId = jobId, ChunkId = chunkId }, mode);
                 AzureClient.Instance.CacheClient.Remove(chunkKey);
+                Logger.Log.Instance.Info(string.Format("     ==> Clear cache for chunk {0}", chunkId));
             }
+
+            AzureClient.Instance.CacheClient.Remove(sumKey);
+            Logger.Log.Instance.Info(string.Format("     ==> Clear cache for sum of job {0}", jobId));
 
             return true;
         }

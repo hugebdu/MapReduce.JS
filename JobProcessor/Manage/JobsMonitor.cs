@@ -41,7 +41,6 @@ namespace JobProcessor.Manage
                     jobInfo.PopReceipt,
                     jobInfo.DataSource));
 
-                // TODO: Define callback function
                 if (_jobManager.ProcessJob(jobInfo, OnResumeJobProcessing))
                 {
                     Logger.Log.Instance.Info(string.Format("JobMonitor. Job started. MessageId: {0}, PopReceipt: {1}, DataSource: {2}. Process.",
