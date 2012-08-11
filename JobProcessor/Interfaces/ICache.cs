@@ -9,6 +9,7 @@ namespace JobProcessor.Interfaces
     {
         object this[string key] { get; set; }
         object Get(string key);
+        void Remove(string key);
         object Add(string key, object value);
     }
 }

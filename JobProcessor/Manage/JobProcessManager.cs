@@ -133,6 +133,7 @@ namespace JobProcessor.Manage
             {
                 _jobHistoryUpdater.UpdateJobStatus(new JobInfo() { JobId = jobId }, JobProcessStatus.ReduceComplete);
                 _jobProcessDataCollection[jobId].ReduceResultsCollector.SubmitResult();
+                _jobProcessDataCollection[jobId].MapResultsCollector.CleanUp();
                 _jobProcessDataCollection[jobId].JobCompleteCallback(_jobProcessDataCollection[jobId].JobInfo, JobProcessStatus.Completed);
             }
             catch (Exception ex)

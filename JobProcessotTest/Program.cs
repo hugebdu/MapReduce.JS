@@ -14,7 +14,7 @@ namespace JobProcessotTest
             //return;
             //mrgen.test();
             //return;
-            
+
             if (args.Length > 0)
             {
                 var mrgen = new MapResultGenerator();

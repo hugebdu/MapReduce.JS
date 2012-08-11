@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using JobProcessor.Model;
+
 namespace JobProcessor.Interfaces
 {
     public interface IMapResultsCollector : IResultsCollector
     {
-        System.Collections.Generic.IEnumerable<JobProcessor.Model.JobChunk> SplittedMappedData();
+        IEnumerable<JobChunk> SplittedMappedData();
+        void CleanUp();
     }
 }

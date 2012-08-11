@@ -53,6 +53,11 @@ namespace JobProcessor.Implementation
             return _cacheClient.Get(key);
         }
 
+        public void Remove(string key)
+        {
+            _cacheClient.Remove(key);
+        }
+
         public object Add(string key, object value)
         {
             return _cacheClient.Add(key, value);

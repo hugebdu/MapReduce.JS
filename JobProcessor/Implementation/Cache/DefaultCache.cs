@@ -31,6 +31,11 @@ namespace JobProcessor.Implementation
             return _cache.ContainsKey(key) ? _cache[key] : null;
         }
 
+        public void Remove(string key)
+        {
+            if (_cache.ContainsKey(key))
+                _cache.Remove(key);
+        }
 
         public object Add(string key, object value)
         {

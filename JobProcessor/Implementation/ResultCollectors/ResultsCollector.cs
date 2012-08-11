@@ -15,7 +15,7 @@ namespace JobProcessor.Implementation
         #endregion Properties
 
         #region Data Members
-        protected readonly SortedList<string, List<string>> _results;
+        protected readonly SortedList<string, List<object>> _results;
         protected readonly JobInfo _jobInfo;
         #endregion Data Members
 
@@ -23,7 +23,7 @@ namespace JobProcessor.Implementation
         public ResultsCollector(JobInfo jobInfo)
         {
             _jobInfo = jobInfo;
-            _results = new SortedList<string, List<string>>();
+            _results = new SortedList<string, List<object>>();
         }
         #endregion Ctor
 
@@ -51,7 +51,7 @@ namespace JobProcessor.Implementation
                 }
                 else
                 {
-                    _results.Add(keyValuePair.Key, new List<string> { keyValuePair.Value });
+                    _results.Add(keyValuePair.Key, new List<object> { keyValuePair.Value });
                 }
 
             }

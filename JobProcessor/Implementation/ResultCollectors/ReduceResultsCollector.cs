@@ -42,7 +42,8 @@ namespace JobProcessor.Implementation
         private CloudBlob UploadToBlob(string value)
         {
             //TODO: add errors handling + record created blobs
-            var directoryRef = AzureClient.Instance.BlobClient.GetBlobDirectoryReference(string.Format("result{0}", JobId).ToLower());
+            var jobIdForBlod = System.Text.RegularExpressions.Regex.Replace(JobId, @"[^(\w|\d)]", "");
+            var directoryRef = AzureClient.Instance.BlobClient.GetBlobDirectoryReference(string.Format("result{0}{1}", jobIdForBlod, Guid.NewGuid().ToString("N")).ToLower());
             directoryRef.Container.CreateIfNotExist();
             //var containerRef = AzureClient.Instance.BlobClient.GetContainerReference(string.Format("mapreducejs_{0}", JobId));
             //containerRef.SetPermissions(new Microsoft.WindowsAzure.StorageClient.BlobContainerPermissions()
@@ -50,7 +51,7 @@ namespace JobProcessor.Implementation
             //    PublicAccess = Microsoft.WindowsAzure.StorageClient.BlobContainerPublicAccessType.Container
             //});
             //containerRef.CreateIfNotExist();
-            var blobRef = directoryRef.GetBlobReference(string.Format("{0}.json",JobId));
+            var blobRef = directoryRef.GetBlobReference(string.Format("{0}.json", jobIdForBlod));
             blobRef.UploadText(value);
             return blobRef;
         }

@@ -117,6 +117,14 @@ namespace JobProcessor.Implementation
                     return false;
             }
 
+            // Clear cache
+            AzureClient.Instance.CacheClient.Remove(sumKey);
+            foreach (var chunkId in jobSplitDetails.JobChunkIds)
+            {
+                var chunkKey = GetJobChunkKey(new JobChunkUid() { JobId = jobId, ChunkId = chunkId }, mode);
+                AzureClient.Instance.CacheClient.Remove(chunkKey);
+            }
+
             return true;
         }
 

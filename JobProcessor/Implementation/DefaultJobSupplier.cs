@@ -46,7 +46,7 @@ namespace JobProcessor.Implementation
                     return null;
                 }
 
-                _queue.UpdateMessage(message, new TimeSpan(0, 1, 0), MessageUpdateFields.Visibility);
+                _queue.UpdateMessage(message, new TimeSpan(0, 5, 0), MessageUpdateFields.Visibility);
 
                 Logger.Log.Instance.Info("DefaultJobSupplier. Got message from the queue. Create JobInfo");
                 return parseQueueMessage(message);
