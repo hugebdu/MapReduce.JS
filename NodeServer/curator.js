@@ -48,13 +48,13 @@ Curator.prototype.start = function (){
 	
 	this.jobMonitor.on('jobReceived',function(msg){
 			util.log('<Curator>: Receive job chunk');
-			var freeNode = activeCurator.getFreeNode();
+			var freeNode = activeCurator.getFreeNode(true);
 			if(freeNode){
 				var srvMsg = JSON.parse(msg);
 				
 				blobService.getBlobToText(srvMsg.BlobContainer,srvMsg.BlobName, function(error,text, blobResult, response){
 					if(!error){
-						util.log('<Curator>: Read data from blob ');
+						util.log('<Curator>: Send data from blob to client. Mode: ' + srvMsg.Mode);
 						var clientMsg = {
 									"details" : {
 										"name" : srvMsg.ChunkUid.JobName,
@@ -128,6 +128,7 @@ Curator.prototype.start = function (){
 												"JobName" : srvMsg.ChunkUid.JobName,
 												"ChunkId" : srvMsg.ChunkUid.ChunkId
 											},
+											"Mode" :  srvMsg.Mode,
 											"Data" : socket.results,
 											"ProcessorNodeId" : activeCurator.curatorId
 										};
@@ -174,16 +175,41 @@ Curator.prototype.processJob = function(job){
 }
 
 
-Curator.prototype.getFreeNode = function (){
+Curator.prototype.getFreeNode = function (pickNode){
 	util.log("Look for free node");
 	var clients = this.io.sockets.clients();
 	util.log("Total client: " + clients.length);
+
+	if(!pickNode){
+		for(var i=0; i<clients.length; i++) {
+			if (clients[i].currentStatus == 'idle'){
+				util.log("[Found free node]");
+				return clients[i];
+			}
+		}
+		return null;
+	}
+	
+	var minJobs = 9999999;
+	var selectedNode = null;
 	for(var i=0; i<clients.length; i++) {
         if (clients[i].currentStatus == 'idle'){
-			util.log("[Found free node]");
-			return clients[i];
+			if(!clients[i].jobs)
+				clients[i].jobs = 0;
+			
+			if(clients[i].jobs<minJobs){
+				selectedNode = clients[i];
+				minJobs = clients[i].jobs;
+			}
 		}
     }
+	
+	if(selectedNode){
+		util.log("[Found free node]");
+		selectedNode.jobs++;
+		return selectedNode;
+	}
+	
 	util.log("No free nodes");
 	return null;
 }
@@ -206,7 +232,7 @@ function unregisterNode(curator, nodeId){
 
 function updateJobMasterReadState(curator){
 	if(!curator)return;
-	curator.jobMonitor.Read = curator.getFreeNode()?true:false;
+	curator.jobMonitor.Read = curator.getFreeNode(false)?true:false;
 	util.log('<Curator>: Set jobMonitor.Read = ' + curator.jobMonitor.Read);
 }
 

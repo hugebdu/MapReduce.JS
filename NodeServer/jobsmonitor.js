@@ -3,7 +3,7 @@ var azure = require('azure')
   , events = require('events');
 
 
-var queueCheckDelay = 5000;
+var queueCheckDelay = 500;
 var jobsQueueName = 'jobchunks';
   
 /**
