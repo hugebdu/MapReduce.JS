@@ -28,7 +28,7 @@ namespace JobProcessor.Implementation
                 return new KeyValueMessage()
                     {
                         key = pair.Key,
-                        value = pair.Value.ToArray()
+                        value = pair.Value.Count > 1 ? pair.Value.ToArray() : pair.Value[0]
                     };
             }).ToArray();
 

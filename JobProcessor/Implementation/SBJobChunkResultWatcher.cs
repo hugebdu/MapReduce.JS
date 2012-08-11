@@ -148,7 +148,7 @@ namespace JobProcessor.Implementation
                     return;
                 }
 
-                Logger.Log.Instance.Info(string.Format("ChunkResultWatcher. {2} сhunk result message is for JobId '{0}', ChunkId '{1}'",
+                Logger.Log.Instance.Info(string.Format("ChunkResultWatcher. {2} chunk result message is for JobId '{0}', ChunkId '{1}'",
                     chunkResult.ChunkUid.JobId,
                     chunkResult.ChunkUid.ChunkId,
                     chunkResult.Mode));

@@ -8,6 +8,6 @@ namespace JobProcessor.Model
     public class KeyValueMessage
     {
         public string key { get; set; }
-        public object[] value { get; set; }
+        public object value { get; set; }
     }
 }
