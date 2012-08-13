@@ -105,20 +105,23 @@ namespace JobProcessor.Manage
         {
             try
             {
-                Logger.Log.Instance.Info(string.Format("JobMonitor. Chunk of {2} stage result arrived for JobId '{0}', ChunkId '{1}'",
+                Logger.Log.Instance.Info(string.Format("JobMonitor. Chunk of {2} stage result arrived for JobId '{0}', ChunkId '{1}'. Done: {3}",
                     mapResultMessage.ChunkUid.JobId,
                     mapResultMessage.ChunkUid.ChunkId,
-                    mapResultMessage.Mode));
+                    mapResultMessage.Mode,
+                    mapResultMessage.Done));
 
                 if (mapResultMessage.Mode == ProcessingMode.Map)
                 {
                     _jobProcessDataCollection[mapResultMessage.ChunkUid.JobId].MapResultsCollector.AddResult(mapResultMessage);
-                    _jobJobChunkRegistrator.UpdateChunkMapComplete(mapResultMessage.ChunkUid);
+                    if (mapResultMessage.Done)
+                        _jobJobChunkRegistrator.UpdateChunkMapComplete(mapResultMessage.ChunkUid);
                 }
                 else if (mapResultMessage.Mode == ProcessingMode.Reduce)
                 {
                     _jobProcessDataCollection[mapResultMessage.ChunkUid.JobId].ReduceResultsCollector.AddResult(mapResultMessage);
-                    _jobJobChunkRegistrator.UpdateChunkReduceComplete(mapResultMessage.ChunkUid);
+                    if (mapResultMessage.Done)
+                        _jobJobChunkRegistrator.UpdateChunkReduceComplete(mapResultMessage.ChunkUid);
                 }
             }
             catch (Exception ex)

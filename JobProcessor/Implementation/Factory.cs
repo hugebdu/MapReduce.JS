@@ -32,7 +32,8 @@ namespace JobProcessor.Implementation
 
         public IJobChunkResultWatcher CreateChunkResultWatcher()
         {
-            return new SBJobChunkResultWatcher();
+            //return new SBJobChunkResultWatcher();
+            return new QueueJobChunkResultWatcher();
         }
 
         public IMapResultsCollector CreateMapResultsCollector(JobInfo jobInfo)
@@ -47,7 +48,7 @@ namespace JobProcessor.Implementation
 
         public IJobHistoryUpdater CreateJobHistoryUpdater()
         {
-            return new DefaultJobHistoryUpdater();
+            return new DefaultJobHistoryUpdater() { Active = false };
         }
 
         #endregion Factory methods

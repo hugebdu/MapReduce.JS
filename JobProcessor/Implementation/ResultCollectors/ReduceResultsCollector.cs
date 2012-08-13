@@ -34,7 +34,7 @@ namespace JobProcessor.Implementation
 
             var jsonMessage = Newtonsoft.Json.JsonConvert.SerializeObject(resultArray);
             var blob = UploadToBlob(jsonMessage);
-
+            _results.Clear();
         }
         #endregion Public methods
 

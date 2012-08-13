@@ -11,7 +11,7 @@ namespace JobProcessor.Implementation
 {
     class MapResultsCollector : ResultsCollector, IMapResultsCollector
     {
-        private const int MaxReduceChunkLength = 1024;
+        private const double MaxReduceChunkLength = 500 * 1024;
         #region Ctor
         public MapResultsCollector(JobInfo jobInfo)
             : base(jobInfo)
@@ -37,31 +37,36 @@ namespace JobProcessor.Implementation
 
                 messages.Add(message);
 
-                var jsonMessage = Newtonsoft.Json.JsonConvert.SerializeObject(messages);
-                if (jsonMessage.Length > MaxReduceChunkLength
-                    || i == _results.Keys.Count - 1)
+                if (i % 500 == 0 || i == _results.Keys.Count - 1)
                 {
-                    var blob = UploadToBlob(string.Format("rchunk{0}.json", i), jsonMessage);
-
-                    var chunk = new JobChunk()
+                    var jsonMessage = Newtonsoft.Json.JsonConvert.SerializeObject(messages);
+                    if (jsonMessage.Length > MaxReduceChunkLength
+                        || i == _results.Keys.Count - 1)
                     {
-                        Mode = ProcessingMode.Reduce,
-                        Handler = _jobInfo.Handler,
-                        Data = blob.Uri.ToString(),
-                        IsBlob = true,
-                        BlobContainer = blob.Container.Name,
-                        BlobName = blob.Name,
-                        ResponseQueueName = JobProcessor.RoleSettings.ChunkResponseQueue
-                    };
-                    chunk.ChunkUid.JobId = JobId;
-                    chunk.ChunkUid.JobName = _jobInfo.JobName;
-                    chunk.ChunkUid.ChunkId = Guid.NewGuid().ToString();
+                        var blob = UploadToBlob(string.Format("rchunk{0}.json", i), jsonMessage);
 
-                    yield return chunk;
+                        var chunk = new JobChunk()
+                        {
+                            Mode = ProcessingMode.Reduce,
+                            Handler = _jobInfo.Handler,
+                            Data = blob.Uri.ToString(),
+                            IsBlob = true,
+                            BlobContainer = blob.Container.Name,
+                            BlobName = blob.Name,
+                            ResponseQueueName = JobProcessor.RoleSettings.ChunkResponseQueue
+                        };
+                        chunk.ChunkUid.JobId = JobId;
+                        chunk.ChunkUid.JobName = _jobInfo.JobName;
+                        chunk.ChunkUid.ChunkId = Guid.NewGuid().ToString();
 
-                    messages.Clear();
+                        yield return chunk;
+
+                        messages.Clear();
+                    }
                 }
             }
+
+            _results.Clear();
         }
 
         public void CleanUp()

@@ -5,15 +5,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
-using Microsoft.ServiceBus;
-using Microsoft.ServiceBus.Messaging;
+using Microsoft.WindowsAzure.StorageClient;
 using JobProcessor.Interfaces;
 using JobProcessor.Model;
 using JobProcessor;
 
 namespace JobProcessor.Implementation
 {
-    class SBJobChunkResultWatcher : IJobChunkResultWatcher
+    class QueueJobChunkResultWatcher : IJobChunkResultWatcher
     {
         #region Constants
         private const int WatcherRateMs = 10000;
@@ -30,7 +29,7 @@ namespace JobProcessor.Implementation
         #endregion Data members
 
         #region Ctor
-        public SBJobChunkResultWatcher()
+        public QueueJobChunkResultWatcher()
         {
             // Normally we will read it from the configuration file - different for every worker role
             _watchingQueueName = JobProcessor.RoleSettings.ChunkResponseQueue;
@@ -77,8 +76,8 @@ namespace JobProcessor.Implementation
         {
             Logger.Log.Instance.Info("ChunkResultWatcher. Watcher started");
 
-            var queueClient = (QueueClient)objQueueClient;
-            while (true)
+            var queue = (CloudQueue)objQueueClient;
+            while (true) 
             {
                 if (_cancellationTokenSource!=null && _cancellationTokenSource.IsCancellationRequested)
                 {
@@ -89,9 +88,12 @@ namespace JobProcessor.Implementation
                 try
                 {
                     Logger.Log.Instance.Debug("ChunkResultWatcher. Watcher -> check for new messages");
-                    var msg = queueClient.Receive();
+                    var msg = queue.GetMessage();
                     if (msg != null)
-                        ProcessMessage(msg);
+                    {
+                        if (ProcessMessage(msg))
+                            queue.DeleteMessage(msg);
+                    }
                     else
                         Thread.Sleep(WatcherRateMs);
                 }
@@ -103,41 +105,26 @@ namespace JobProcessor.Implementation
             }
         }
 
-        private QueueClient PrepareWatchingQueue()
+        private CloudQueue PrepareWatchingQueue()
         {
-            var namespaceManagerSetting = new NamespaceManagerSettings()
-            {
-                TokenProvider = TokenProvider.CreateSharedSecretTokenProvider(RoleSettings.ServiceBusIssuerName, RoleSettings.ServiceBusIssuerSecret),
-            };
 
-            var namespaceManager = new NamespaceManager(RoleSettings.ServiceBusAddress, namespaceManagerSetting);
-            if (!namespaceManager.QueueExists(_watchingQueueName))
-            {
-                namespaceManager.CreateQueue(_watchingQueueName);
-            }
-
-            var factory = MessagingFactory.Create(RoleSettings.ServiceBusAddress, SharedSecretTokenProvider.CreateSharedSecretTokenProvider(RoleSettings.ServiceBusIssuerName, RoleSettings.ServiceBusIssuerSecret));
-            var queueClient = factory.CreateQueueClient(_watchingQueueName);
-            
-            return queueClient;
+            var queue = AzureClient.Instance.QueueClient.GetQueueReference(_watchingQueueName);
+            queue.CreateIfNotExist();
+            return queue;
         }
 
-        private void ProcessMessage(BrokeredMessage msg)
+        private bool ProcessMessage(CloudQueueMessage msg)
         {
             try
             {
-                Logger.Log.Instance.Info(string.Format("ChunkResultWatcher. Got a chunk result message #{0}. Process.", msg.MessageId));
+                Logger.Log.Instance.Info(string.Format("ChunkResultWatcher. Got a chunk result message #{0}. Process.", msg.Id));
                 
-                string body = null;
-                using (var streamReader = new System.IO.StreamReader(msg.GetBody<Stream>()))
-                { 
-                    body = streamReader.ReadToEnd();
-                }
+                string body = msg.AsString;
                 
                 if (string.IsNullOrEmpty(body))
                 {
                     Logger.Log.Instance.Warning(string.Format("ChunkResultWatcher. Cannot process chunk result message - body is null"));
-                    return;
+                    return true;
                 }
 
                 Logger.Log.Instance.Info(string.Format("ChunkResultWatcher. Process chunk result message: {0}", body));
@@ -146,7 +133,7 @@ namespace JobProcessor.Implementation
                 if (chunkResult == null)
                 {
                     Logger.Log.Instance.Warning(string.Format("ChunkResultWatcher. Process chunk result message - cannot get ChunkResultMessage (null) from body '{0}'", body));
-                    return;
+                    return true;
                 }
 
                 Logger.Log.Instance.Info(string.Format("ChunkResultWatcher. {2} chunk result message is for JobId '{0}', ChunkId '{1}'",
@@ -160,12 +147,12 @@ namespace JobProcessor.Implementation
                     chunkResultArrive(this, chunkResult);
                 }
 
-                msg.Complete();
+                return true;
             }
             catch (Exception ex)
             {
-                msg.Abandon();
-                Logger.Log.Instance.Error(string.Format("ChunkResultWatcher. Failed to process chunk result message #{1}. Error: {0}", ex.Message, msg.MessageId));
+                Logger.Log.Instance.Error(string.Format("ChunkResultWatcher. Failed to process chunk result message #{1}. Error: {0}", ex.Message, msg.Id));
+                return false;
             }
         }
         #endregion Private Methods

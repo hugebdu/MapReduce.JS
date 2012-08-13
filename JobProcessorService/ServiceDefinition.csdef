@@ -1,8 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ServiceDefinition name="JobProcessorService" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceDefinition">
-  <WorkerRole name="JobProcessor" vmsize="Small">
+  <WorkerRole name="JobProcessor" vmsize="ExtraSmall">
     <Imports>
       <Import moduleName="Diagnostics" />
+      <Import moduleName="RemoteAccess" />
+      <Import moduleName="RemoteForwarder" />
     </Imports>
   </WorkerRole>
 </ServiceDefinition>

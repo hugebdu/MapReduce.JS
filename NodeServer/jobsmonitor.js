@@ -3,7 +3,7 @@ var azure = require('azure')
   , events = require('events');
 
 
-var queueCheckDelay = 500;
+var queueCheckDelay = 1000;
 var jobsQueueName = 'jobchunks';
   
 /**
@@ -63,7 +63,6 @@ JobsMonitor.prototype.checkJobQueue = function(JobsMonitor){
 					var message = messages[index];
 					util.log("Got message " + message.messageid);
 					// text is available in messages[index].messagetext
-					processJobMessage(JobsMonitor,message.messagetext);
 					util.log("Delete message " + message.messageid);
 					
 					JobsMonitor.queueService.deleteMessage(
@@ -74,9 +73,18 @@ JobsMonitor.prototype.checkJobQueue = function(JobsMonitor){
 							if(!deleteError){
 								// Message deleted
 								util.log("Message deleted...");
+								processJobMessage(JobsMonitor,message.messagetext);
+							}
+							else{
+								util.log("<JobsMonitor>: Error deleting message");
 							}
 						});
+					
 				}
+			}
+			else
+			{
+				util.log("<JobsMonitor>: Error getting message");
 			}
 		});
 }

@@ -11,6 +11,7 @@ namespace JobProcessor.Model
         public KeyValue[] Data { get; set; }
         public string ProcessorNodeId { get; set; }
         public ProcessingMode Mode { get; set; }
+        public bool Done { get; set; }
     }
     
     public class KeyValue

@@ -11,8 +11,12 @@ namespace JobProcessor.Implementation
 {
     class DefaultJobHistoryUpdater : IJobHistoryUpdater
     {
+        public bool Active { get; set; }
+
         public void AddChunckInfo(Model.JobChunk chunk)
         {
+            if (!Active)
+                return;
             Logger.Log.Instance.Info(string.Format("DefaultJobHistoryUpdater. Add new chunk info. JobId: {0}, ChunkId: {1}, Mode: {2}",
                 chunk.ChunkUid.JobId,
                 chunk.ChunkUid.ChunkId,
@@ -46,6 +50,9 @@ namespace JobProcessor.Implementation
 
         public void UpdateJobStatus(Model.JobInfo jobInfo, Model.JobProcessStatus status)
         {
+            if (!Active)
+                return;
+            
             Logger.Log.Instance.Info(string.Format("DefaultJobHistoryUpdater. Update Job status. JobId: {0}, Status: {1}",
                 jobInfo.JobId,
                 status.ToString()));

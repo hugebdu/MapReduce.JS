@@ -46,6 +46,7 @@ namespace JobProcessor
         {
             try
             {
+                Logger.Log.Instance.Active = true;
                 // This is a sample worker implementation. Replace with your logic.
                 Trace.WriteLine("$projectname$ entry point called", "Information");
                 Logger.Log.Instance.Info("WorkerRole. Start worker role");

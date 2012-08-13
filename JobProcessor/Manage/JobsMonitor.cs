@@ -48,7 +48,7 @@ namespace JobProcessor.Manage
                         jobInfo.PopReceipt,
                         jobInfo.DataSource));
 
-                    //_jobSupplier.RemoveJob(jobInfo);
+                    _jobSupplier.RemoveJob(jobInfo);
                 }
                 else
                 {
@@ -70,20 +70,28 @@ namespace JobProcessor.Manage
                     jobInfo.JobMessageId,
                     jobInfo.PopReceipt,
                     status));
-
-            switch (status)
+            try
             {
-                case JobProcessStatus.Completed:
-                    _jobSupplier.RemoveJob(jobInfo);
-                    break;
+                switch (status)
+                {
+                    case JobProcessStatus.Completed:
+                        //_jobSupplier.RemoveJob(jobInfo);
+                        break;
 
-                case JobProcessStatus.Failed:
-                    _jobSupplier.ReturnJob(jobInfo);
-                    break;
+                    case JobProcessStatus.Failed:
+                        _jobSupplier.ReturnJob(jobInfo);
+                        break;
 
-                default:
-                    Logger.Log.Instance.Warning("JobMonitor. OnResumeJobProcessing - unsupported status");
-                    break;
+                    default:
+                        Logger.Log.Instance.Warning("JobMonitor. OnResumeJobProcessing - unsupported status");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log.Instance.Exception(ex, string.Format("JobMonitor. OnResumeJobProcessing error. MessageId: {0},  Status: {1}",
+                    jobInfo.JobMessageId,
+                    status));
             }
         }
         #endregion Private methods

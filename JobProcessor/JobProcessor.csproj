@@ -73,6 +73,7 @@
     <Compile Include="Implementation\CacheJobChunkRegistrator.cs" />
     <Compile Include="Implementation\Cache\AzureCache.cs" />
     <Compile Include="Implementation\Cache\DefaultCache.cs" />
+    <Compile Include="Implementation\QueueJobChunkResultWatcher.cs" />
     <Compile Include="Implementation\DefaultJobHistoryUpdater.cs" />
     <Compile Include="Implementation\ResultCollectors\ReduceResultsCollector.cs" />
     <Compile Include="Implementation\ResultCollectors\ResultsCollector.cs" />

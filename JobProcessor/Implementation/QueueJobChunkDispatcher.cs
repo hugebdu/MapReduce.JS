@@ -34,7 +34,6 @@ namespace JobProcessor.Implementation
                 chunk.ChunkUid.ChunkId,
                 jsonChunk));
             _queue.AddMessage(new CloudQueueMessage(jsonChunk));
-
             if (chunk.Mode == ProcessingMode.Map)
             {
                 _jobChunkRegistrator.UpdateChunkMapSent(chunk.ChunkUid);

@@ -11,7 +11,7 @@ var sio = require('socket.io')
   , sql = require('node-sqlserver')
   , jobsmonitor = require('./jobsmonitor')
   , azure = require('azure')
-  , ResponseClient = require('./ResponseClient');
+  , ResponseClient = require('./ResponseQueueClient');
   
 var exports = module.exports = Curator;
 
@@ -83,7 +83,8 @@ Curator.prototype.start = function (){
 				});
 			}
 			else{
-				activeCurator.jobMonitor.returnMessage(msg);
+				updateJobMasterReadState(activeCurator);
+				//activeCurator.jobMonitor.returnMessage(msg);
 			}
 		}
 	);
@@ -114,28 +115,37 @@ Curator.prototype.start = function (){
 		socket.on('done', function (partialResult) {
 			try
 			{
-				util.log('<Curator>: Done of job chunk: ' + socket.nodeId);
+				util.log('<Curator>: Done of job chunk. Socke id: ' + socket.id);
 				if(!partialResult)return;
 				
-				socket.results = (socket.results ? socket.results : []).concat(partialResult.result); 
-				if(partialResult.done){
-					util.log('<Curator>: Job chunk is fully done. Send results');
+				//socket.results = (socket.results ? socket.results : []).concat(partialResult.result); 
+				//socket.results = partialResult.result;
+				//util.log('<Curator>: Current length: ' + socket.results.length);
+				
+				if(partialResult.done || true){
+					util.log('<Curator>: Job chunk is partially done. Send results');
 					var srvMsg = activeCurator.messages[socket.nodeId];
 					
 					var resultMessage = {
 											"ChunkUid" : {
-												"JobId" : srvMsg.ChunkUid.JobId,
-												"JobName" : srvMsg.ChunkUid.JobName,
-												"ChunkId" : srvMsg.ChunkUid.ChunkId
+												"JobId" : partialResult.jobId, //srvMsg.ChunkUid.JobId,
+												"JobName" : partialResult.name, //srvMsg.ChunkUid.JobName,
+												"ChunkId" : partialResult.splitId, //srvMsg.ChunkUid.ChunkId
 											},
-											"Mode" :  srvMsg.Mode,
-											"Data" : socket.results,
+											"Mode" : partialResult.phase, //srvMsg.Mode,
+											"Data" : partialResult.result, //socket.results,
+											"Done" : partialResult.done,
 											"ProcessorNodeId" : activeCurator.curatorId
 										};
 					
 					activeCurator.responseClients[srvMsg.ResponseQueueName].sendMessage(resultMessage);
-					socket.currentStatus = 'idle';
-					updateJobMasterReadState(activeCurator); 
+					if(partialResult.done){
+						util.log('<Curator>: Job chunk is fully done.');
+						socket.currentStatus = 'idle';
+						//socket.results = null;
+						//activeCurator.messages[socket.nodeId] = null;
+						updateJobMasterReadState(activeCurator); 
+					}
 				}
 			}
 			catch(e)
@@ -190,7 +200,7 @@ Curator.prototype.getFreeNode = function (pickNode){
 		return null;
 	}
 	
-	var minJobs = 9999999;
+	var minJobs = 999999999;
 	var selectedNode = null;
 	for(var i=0; i<clients.length; i++) {
         if (clients[i].currentStatus == 'idle'){
@@ -236,18 +246,18 @@ function updateJobMasterReadState(curator){
 	util.log('<Curator>: Set jobMonitor.Read = ' + curator.jobMonitor.Read);
 }
 
-function updateNodeStatus(curator, nodeId, status) {
+function updateNodeStatus(nodeId, status) {
 	try{
 		util.log('<Curator>: Update status to: ' + status); 
 		var command;
 		if(status=='new'){
-			command = util.format("INSERT INTO Node (NodeId, Status, CuratorId) VALUES ('%s','%s','%s')",nodeId, status, curator.curatorId);
+			command = util.format("INSERT INTO Node (NodeId, Status, CuratorId) VALUES ('%s','%s','%s')",nodeId, status, activeCurator.curatorId);
 		}
 		else if(status=='closed'){
-			command = util.format("DELETE FROM Node WHERE NodeId = '%s' AND CuratorId = '%s'",nodeId,curator.curatorId);
+			command = util.format("DELETE FROM Node WHERE NodeId = '%s' AND CuratorId = '%s'",nodeId,activeCurator.curatorId);
 		}
 		else{
-			command = util.format("UPDATE Node SET Status = '%s' WHERE NodeId = '%s' AND CuratorId = '%s'",status,nodeId,curator.curatorId);
+			command = util.format("UPDATE Node SET Status = '%s' WHERE NodeId = '%s' AND CuratorId = '%s'",status,nodeId,activeCurator.curatorId);
 		}
 		
 		updateDb(command);

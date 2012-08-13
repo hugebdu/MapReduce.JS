@@ -110,13 +110,18 @@ namespace JobProcessor.Implementation
         #region Private methods
         private JobInfo parseQueueMessage(CloudQueueMessage message)
         {
-            var jobInfo = new JobInfo();
+            if (message == null)
+            {
+                Logger.Log.Instance.Info(string.Format("DefaultJobSupplier. Cannot parse queue null message"));            
+            }
+            
             Logger.Log.Instance.Info(string.Format("DefaultJobSupplier. Parse queue message into JobInfo. Id: {0}, PopReceipt: {1}",
                 message.Id,
                 message.PopReceipt));
 
             // TODO: Parse JSON and handle errors
             var jsonMessage = Newtonsoft.Json.Linq.JObject.Parse(message.AsString);
+            var jobInfo = new JobInfo();
             jobInfo.JobId = jsonMessage.Property("JobId").Value.ToString() + "_" + Guid.NewGuid().ToString("N");
             jobInfo.JobName = jsonMessage.Property("Name").Value.ToString();
             jobInfo.DataSource = jsonMessage.Property("DataSource").Value.ToString();
