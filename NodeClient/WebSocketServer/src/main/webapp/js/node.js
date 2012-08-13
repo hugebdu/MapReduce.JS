@@ -14,7 +14,7 @@ nodeModule.directive("ngLog", function factory() {
                 element.text(newValue);
                 element.prop('scrollTop', element.prop('scrollHeight'));
             });
-        }
+        } 
     };
 });
 
@@ -45,34 +45,69 @@ function NodeCtrl($scope, $filter, $http)
     $scope.job = {};
 
     $scope.run = function() {
-        //TODO:
-        $scope.status = $scope.StatusLabel.Running;
-        $scope.job.progress = 0;
-        var job = $scope.job;
 
-        $scope.log.println("Started job '" + job.details.name + "' phase '" + job.details.phase + "'");
-        var f = eval("(" + job.handler + ")");
-        var outcome = {
-            "jobId": job.details.jobId,
-            "splitId": job.details.splitId,
-            "result": [],
-            "done": false
+        $scope.status = $scope.StatusLabel.Running;
+        $scope.log.println("Started job '" + $scope.job.details.name + "' phase '" + $scope.job.details.phase + "' split '" + $scope.job.details.splitId + "'");
+        $scope.job.progress = 0;
+
+        var worker = new Worker('js/worker.js');
+        var resultsCount = 0;
+
+        worker.onmessage = function(msg) {
+            $scope.$apply(function() {
+                switch (msg.data.cmd) {
+                    case 'log':
+//                        $scope.log.println("(worker) " + msg.data.msg);
+                        break;
+                    case 'result':
+//                        $scope.log.println("(worker) got results: " + msg.data.outcome.result.length);
+                        resultsCount += msg.data.outcome.result.length;
+                        $scope.job.progress = parseInt(resultsCount / $scope.job.data.length * 100);
+                        $scope.socket.emit('done', msg.data.outcome);
+                        if (msg.data.outcome.done) {
+                            $scope.log.println("Finished job '" + $scope.job.details.name + "' phase '" + $scope.job.details.phase + "' split '" + $scope.job.details.splitId + "'");
+                            $scope.status = $scope.StatusLabel.Idle;
+                            worker.terminate();
+                        }
+                        break;
+                }
+            });
         };
 
-        for (var i = 0; i < job.data.length; i++)
-        {
-            outcome.result.push(f[job.details.phase.toLowerCase()](job.data[i]));
-            job.progress = parseInt(job.data.length / 100 * i);
-            if (outcome.result.length == 10)
-            {
-                $scope.socket.emit('done', outcome);
-                outcome.result = [];
-            }
-        }
-        outcome.done = true;
-        $scope.socket.emit('done', outcome);
-        $scope.log.println("Finished job '" + job.details.name + "' phase '" + job.details.phase + "'");
-        $scope.status = $scope.StatusLabel.Idle;
+        worker.postMessage({
+            "cmd": "init",
+            "job": $scope.job
+        });
+
+        worker.postMessage({"cmd": "start"});
+//        //TODO:
+//        $scope.status = $scope.StatusLabel.Running;
+//        $scope.job.progress = 0;
+//        var job = $scope.job;
+//
+//        $scope.log.println("Started job '" + job.details.name + "' phase '" + job.details.phase + "'");
+//        var f = eval("(" + job.handler + ")");
+//        var outcome = {
+//            "jobId": job.details.jobId,
+//            "splitId": job.details.splitId,
+//            "result": [],
+//            "done": false
+//        };
+//
+//        for (var i = 0; i < job.data.length; i++)
+//        {
+//            outcome.result.push(f[job.details.phase.toLowerCase()](job.data[i]));
+//            job.progress = parseInt(job.data.length / 100 * i);
+//            if (outcome.result.length == 10)
+//            {
+//                $scope.socket.emit('done', outcome);
+//                outcome.result = [];
+//            }
+//        }
+//        outcome.done = true;
+//        $scope.socket.emit('done', outcome);
+//        $scope.log.println("Finished job '" + job.details.name + "' phase '" + job.details.phase + "'");
+//        $scope.status = $scope.StatusLabel.Idle;
 
     };
 
@@ -120,7 +155,6 @@ function NodeCtrl($scope, $filter, $http)
         }
     };
 
-
     $scope.log = {
 
         data : "",
@@ -142,12 +176,14 @@ function NodeCtrl($scope, $filter, $http)
         println : function(msg) {
             if (this.data)
                 this.data += '\n';
-            var date = new Date();
-            this.data += this._timestamp();
-            this.data += "   " + msg;
-            var logWindow = $("#logWindow");
-            logWindow.scrollTop(logWindow.prop("scrollHeight"));
+            this.data += this._timestamp() + "   " + msg;
+        },
+
+        clear: function() {
+            this.data = "";
         }
     };
+
+    $scope.connect();
 }
 
