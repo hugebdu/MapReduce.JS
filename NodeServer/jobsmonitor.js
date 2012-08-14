@@ -27,18 +27,15 @@ var JobsMonitor = function () {
 	});  
 
 	setInterval(this.checkJobQueue, queueCheckDelay, this);
-	//setTimeout(sendMessage, queueCheckDelay);
 }
 
 util.inherits(JobsMonitor, events.EventEmitter);  
 
 JobsMonitor.prototype.returnMessage = function(msg){
 	util.log("<JobsMonitor>: Return message....");
-	var creatingMessageOptions = {visibilitytimeout: 30 * 60};
 	this.queueService.createMessage(
 		jobsQueueName,
 		msg,
-		//creatingMessageOptions,
 		function(error, queueMessageResult, response){
 			if(!error){
 				util.log("<JobsMonitor>: Message sent. " + queueMessageResult + ". Reponse: " + response);
@@ -62,7 +59,6 @@ JobsMonitor.prototype.checkJobQueue = function(JobsMonitor){
 				for(var index in messages){
 					var message = messages[index];
 					util.log("Got message " + message.messageid);
-					// text is available in messages[index].messagetext
 					util.log("Delete message " + message.messageid);
 					
 					JobsMonitor.queueService.deleteMessage(
@@ -93,7 +89,6 @@ function processJobMessage(JobsMonitor, message){
 	util.log("<JobsMonitor>: Start process message");
 	JobsMonitor.emit('jobReceived', message)
 }
-
 
 exports = module.exports = JobsMonitor;
 

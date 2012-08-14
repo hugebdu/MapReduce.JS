@@ -117,23 +117,19 @@ Curator.prototype.start = function (){
 			{
 				util.log('<Curator>: Done of job chunk. Socke id: ' + socket.id);
 				if(!partialResult)return;
-				
-				//socket.results = (socket.results ? socket.results : []).concat(partialResult.result); 
-				//socket.results = partialResult.result;
-				//util.log('<Curator>: Current length: ' + socket.results.length);
-				
+
 				if(partialResult.done || true){
 					util.log('<Curator>: Job chunk is partially done. Send results');
 					var srvMsg = activeCurator.messages[socket.nodeId];
 					
 					var resultMessage = {
 											"ChunkUid" : {
-												"JobId" : partialResult.jobId, //srvMsg.ChunkUid.JobId,
-												"JobName" : partialResult.name, //srvMsg.ChunkUid.JobName,
-												"ChunkId" : partialResult.splitId, //srvMsg.ChunkUid.ChunkId
+												"JobId" : partialResult.jobId, 
+												"JobName" : partialResult.name,
+												"ChunkId" : partialResult.splitId, 
 											},
-											"Mode" : partialResult.phase, //srvMsg.Mode,
-											"Data" : partialResult.result, //socket.results,
+											"Mode" : partialResult.phase, 
+											"Data" : partialResult.result,
 											"Done" : partialResult.done,
 											"ProcessorNodeId" : activeCurator.curatorId
 										};
@@ -142,8 +138,6 @@ Curator.prototype.start = function (){
 					if(partialResult.done){
 						util.log('<Curator>: Job chunk is fully done.');
 						socket.currentStatus = 'idle';
-						//socket.results = null;
-						//activeCurator.messages[socket.nodeId] = null;
 						updateJobMasterReadState(activeCurator); 
 					}
 				}
@@ -160,23 +154,6 @@ Curator.prototype.start = function (){
 			socket.currentStatus = 'disconnected';
 			unregisterNode(activeCurator,socket.nodeId);
 		});
-		
-		// setTimeout(function() { 
-					// socket.emit(
-						// 'job_temp',
-						// { 
-							// "details" : {
-								// "name" : "Daniloop",
-								// "jobId" : generateGuid(),
-								// "splitId" : generateGuid(),
-								// "phase" : "Map"
-							// },
-							// "data" : "http://wix.com",
-							// "handler" : "function (d) {alert('Hello from mapper');}"
-						// }
-						// ); 
-					// }, 
-					// 5000);
 	});
 }
 
@@ -227,7 +204,7 @@ Curator.prototype.getFreeNode = function (pickNode){
 
 function registerNode(curator){
 	var nodeId = generateGuid();
-	//util.log('<Curator>:   Assign socket ID = ' + nodeId);
+	util.log('<Curator>:   Assign socket ID = ' + nodeId);
 	curator.activeNodes[nodeId] = {};
 	updateNodeStatus(nodeId,'new');
 	return nodeId;
@@ -282,8 +259,7 @@ function updateNodeInfo(curator, nodeId, nodeInfo) {
 function updateNodeJobProgress(curator,nodeId, jobInfo) {
 	try{
 		util.log('<Curator>: Update job info: ' + jobInfo + ' for node ' + nodeId); 
-		//TODO: Update DB
-		//var command = util.format("UPDATE Node SET NodeInfo = '%s', Status = 'idle' WHERE NodeId = '%s' AND CuratorId = '%s'",nodeInfo,nodeId,curatorId);
+		var command = util.format("UPDATE Node SET NodeInfo = '%s', Status = 'idle' WHERE NodeId = '%s' AND CuratorId = '%s'",nodeInfo,nodeId,curatorId);
 		//updateDb(command);
 	}
 	catch(e){
