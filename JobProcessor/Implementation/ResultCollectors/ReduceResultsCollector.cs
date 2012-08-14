@@ -43,7 +43,7 @@ namespace JobProcessor.Implementation
         {
             //TODO: add errors handling + record created blobs
             var jobIdForBlod = SanitizeJobIdToBlobName();
-            var directoryName = string.Format("result{0}", jobIdForBlod).ToLower();
+            var directoryName = string.Format("result-{0}", jobIdForBlod);
             Logger.Log.Instance.Info(string.Format("ReduceResultsCollector. Generate blob directory: {0}", directoryName));
             var directoryRef = AzureClient.Instance.BlobClient.GetBlobDirectoryReference(directoryName);
             directoryRef.Container.CreateIfNotExist();

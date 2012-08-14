@@ -11,7 +11,10 @@ namespace JobProcessor.Implementation
 {
     class MapResultsCollector : ResultsCollector, IMapResultsCollector
     {
+        #region Const
         private const double MaxReduceChunkLength = 500 * 1024;
+        #endregion Const
+
         #region Ctor
         public MapResultsCollector(JobInfo jobInfo)
             : base(jobInfo)
@@ -92,7 +95,7 @@ namespace JobProcessor.Implementation
         {
             var jobIdForBlod = SanitizeJobIdToBlobName();
             Logger.Log.Instance.Info(string.Format("MapResultsCollector. Generate blob directory: {0}", jobIdForBlod));
-            return AzureClient.Instance.BlobClient.GetBlobDirectoryReference(string.Format("mr{0}", jobIdForBlod).ToLower());
+            return AzureClient.Instance.BlobClient.GetBlobDirectoryReference(string.Format("mr{0}", jobIdForBlod));
         }
 
         #endregion Private methods

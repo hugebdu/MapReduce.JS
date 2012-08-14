@@ -30,7 +30,7 @@ namespace JobProcessor
 
         static RoleSettings()
         {
-            ChunkResponseQueue = "chunkresults1";
+            ChunkResponseQueue = "chunks4role1";
             RoleId = "Role1";
         }
 
