@@ -83,7 +83,6 @@ namespace JobProcessor.Implementation
         #region Private methods
         private CloudBlob UploadToBlob(string filename, string value)
         {
-            //TODO: add errors handling + record created blobs
             var directoryRef = GetBlobDirectoryRef();
             directoryRef.Container.CreateIfNotExist();
             var blobRef = directoryRef.GetBlobReference(filename);

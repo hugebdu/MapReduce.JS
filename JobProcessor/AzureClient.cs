@@ -13,7 +13,9 @@ namespace JobProcessor
 {
     internal class AzureClient
     {
+
         public static AzureClient Instance {get; private set;}
+
         static AzureClient()
         {
             Instance = new AzureClient();
@@ -25,8 +27,6 @@ namespace JobProcessor
         
         private AzureClient()
         {
-            //CloudStorageAccount.SetConfigurationSettingPublisher(ConfigurationSettingPublisher);
-            //var client = CloudStorageAccount.FromConfigurationSetting("idc");
             CloudStorageAccount storageAccount = null;
             
             if(RoleSettings.UseDevelopAccount) 
@@ -37,11 +37,6 @@ namespace JobProcessor
             this.QueueClient = storageAccount.CreateCloudQueueClient();
             this.BlobClient = storageAccount.CreateCloudBlobClient();
             this.CacheClient = new Implementation.DefaultCache();
-        }
-
-        private static void ConfigurationSettingPublisher(string s, Func<string, bool> func)
-        {
-            func(RoleEnvironment.GetConfigurationSettingValue(s));
         }
     }
 }

@@ -31,7 +31,6 @@ namespace JobProcessor.Implementation
         {
             try
             {
-                // TODO: Consider setting visibility timeout here - per message
                 Logger.Log.Instance.Info("DefaultJobSupplier. GetNextJob called");
                 var message = _queue.GetMessage();
                 if (message == null)
@@ -88,8 +87,7 @@ namespace JobProcessor.Implementation
                     jobInfo.JobMessageId,
                     jobInfo.PopReceipt));                
                 
-                //TODO: Implement retrun Job
-                //throw new NotImplementedException();
+                // Implement retrun Job
                 //var message = new CloudQueueMessage(string.Empty)
                 //{
                 //    //Id = jobInfo.JobMessageId,
@@ -119,19 +117,12 @@ namespace JobProcessor.Implementation
                 message.Id,
                 message.PopReceipt));
 
-            // TODO: Parse JSON and handle errors
             var jsonMessage = Newtonsoft.Json.Linq.JObject.Parse(message.AsString);
             var jobInfo = new JobInfo();
             jobInfo.JobId = jsonMessage.Property("JobId").Value.ToString() + "_" + Guid.NewGuid().ToString("N");
             jobInfo.JobName = jsonMessage.Property("Name").Value.ToString();
             jobInfo.DataSource = jsonMessage.Property("DataSource").Value.ToString();
             jobInfo.Handler = jsonMessage.Property("Handler").Value.ToString();
-
-            //var parts = message.AsString.Split(',');
-            //jobInfo.JobId = parts[0];
-            //jobInfo.DataSource = parts[1];
-            //jobInfo.Mapper = parts[2];
-            //jobInfo.Reducer = parts[3];
             jobInfo.JobMessageId = message.Id;
             jobInfo.PopReceipt = message.PopReceipt;
 

@@ -41,7 +41,6 @@ namespace JobProcessor.Implementation
         #region Private methods
         private CloudBlob UploadToBlob(string value)
         {
-            //TODO: add errors handling + record created blobs
             var jobIdForBlod = SanitizeJobIdToBlobName();
             var directoryName = string.Format("result-{0}", jobIdForBlod);
             Logger.Log.Instance.Info(string.Format("ReduceResultsCollector. Generate blob directory: {0}", directoryName));

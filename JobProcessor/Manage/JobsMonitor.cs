@@ -47,8 +47,6 @@ namespace JobProcessor.Manage
                         jobInfo.JobMessageId,
                         jobInfo.PopReceipt,
                         jobInfo.DataSource));
-
-                    _jobSupplier.RemoveJob(jobInfo);
                 }
                 else
                 {
@@ -75,7 +73,7 @@ namespace JobProcessor.Manage
                 switch (status)
                 {
                     case JobProcessStatus.Completed:
-                        //_jobSupplier.RemoveJob(jobInfo);
+                        _jobSupplier.RemoveJob(jobInfo);
                         break;
 
                     case JobProcessStatus.Failed:

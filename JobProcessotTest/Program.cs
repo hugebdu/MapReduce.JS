@@ -10,10 +10,6 @@ namespace JobProcessotTest
     {
         static void Main(string[] args)
         {
-            //testSB();
-            //return;
-            //mrgen.test();
-            //return;
             if (args.Length > 0)
             {
                 var mrgen = new MapResultGenerator();
@@ -32,19 +28,6 @@ namespace JobProcessotTest
             workerRole.OnStart();
             workerRole.Run();
 
-        }
-
-        static void testSB()
-        {
-            try
-            {
-                var watcher = new JobProcessor.Implementation.SBJobChunkResultWatcher();
-                watcher.SyncWatch();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error: " + ex.Message);
-            }
         }
     }
 }

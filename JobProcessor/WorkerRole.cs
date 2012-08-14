@@ -47,8 +47,6 @@ namespace JobProcessor
             try
             {
                 Logger.Log.Instance.Active = true;
-                // This is a sample worker implementation. Replace with your logic.
-                Trace.WriteLine("$projectname$ entry point called", "Information");
                 Logger.Log.Instance.Info("WorkerRole. Start worker role");
                 var monitor = new JobsMonitor(new DefaultFactory());
 
@@ -69,10 +67,6 @@ namespace JobProcessor
         {
             // Set the maximum number of concurrent connections 
             ServicePointManager.DefaultConnectionLimit = 12;
-
-            // For information on handling configuration changes
-            // see the MSDN topic at http://go.microsoft.com/fwlink/?LinkId=166357.
-
             return base.OnStart();
         }
     }

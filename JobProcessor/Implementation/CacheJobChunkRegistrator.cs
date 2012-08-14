@@ -64,7 +64,6 @@ namespace JobProcessor.Implementation
                 var jobMapComplete = JobMapComplete;
                 if (jobMapComplete != null)
                 {
-                    // TODO: Cleanup cache for map-completed job
                     Logger.Log.Instance.Info(string.Format("CacheJobChunkRegistrator. Raise job map complete event for JobId '{0}'",
                         chunkUid.JobId));
                     jobMapComplete(this, chunkUid.JobId);
@@ -96,7 +95,6 @@ namespace JobProcessor.Implementation
                 {
                     Logger.Log.Instance.Info(string.Format("CacheJobChunkRegistrator. Raise job reduce complete event. JobId '{0}'",
                         chunkUid.JobId));
-                    // TODO: Cleanup cache for reduce-completed job
                     jobReduceComplete(this, chunkUid.JobId);
                 }
             }

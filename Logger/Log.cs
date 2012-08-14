@@ -22,7 +22,7 @@ namespace Logger
 
         static Log()
         {
-            // TODO: Remove
+            // Temp log solution
             try
             {
                 System.IO.File.Delete(@"c:\temp\mr.log");
@@ -93,6 +93,7 @@ namespace Logger
                 {
                     lock (_syncObject)
                     {
+                        // TEMP Log solution
                         using (var sw = new System.IO.StreamWriter(@"c:\temp\mr.log", true))
                         {
                             sw.WriteLine(string.Format("{0} [{1}]  {2}", DateTime.Now, level, message));
@@ -100,7 +101,6 @@ namespace Logger
                         }
                     }
                 });
-            //TODO: Write log
         }
     }
 }

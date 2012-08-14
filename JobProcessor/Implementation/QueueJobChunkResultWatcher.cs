@@ -37,13 +37,6 @@ namespace JobProcessor.Implementation
         #endregion Ctor
 
         #region Public Methods
-        // TEST ONLY
-        internal void SyncWatch()
-        {
-            var queueClient = PrepareWatchingQueue();
-            Watch(queueClient);
-        }
-
         public void StartWatch()
         {
             Logger.Log.Instance.Info("ChunkResultWatcher. Start watch request");
